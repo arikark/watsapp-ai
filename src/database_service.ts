@@ -1,10 +1,17 @@
-import type { ChatMessage, Env } from './types';
+import { count, desc, eq, lt } from 'drizzle-orm';
+import {
+  type ChatMessage,
+  chat_messages,
+  createDb,
+  type NewChatMessage,
+} from './db';
+import type { Env } from './types';
 
 export class DatabaseService {
-  private db: D1Database;
+  private db: ReturnType<typeof createDb>;
 
   constructor(env: Env) {
-    this.db = env.DB;
+    this.db = createDb(env);
   }
 
   async saveMessage(
@@ -16,14 +23,15 @@ export class DatabaseService {
     const timestamp = new Date().toISOString();
 
     try {
-      await this.db
-        .prepare(`
-        INSERT INTO chat_messages (id, phone_number, message, timestamp, is_from_user)
-        VALUES (?, ?, ?, ?, ?)
-      `)
-        .bind(id, phoneNumber, message, timestamp, isFromUser ? 1 : 0)
-        .run();
+      const newMessage: NewChatMessage = {
+        id,
+        phone_number: phoneNumber,
+        message,
+        timestamp,
+        is_from_user: isFromUser,
+      };
 
+      await this.db.insert(chat_messages).values(newMessage);
       return id;
     } catch (error) {
       console.error('Error saving message to database:', error);
@@ -36,18 +44,14 @@ export class DatabaseService {
     limit: number = 10
   ): Promise<ChatMessage[]> {
     try {
-      const result = await this.db
-        .prepare(`
-        SELECT id, phone_number, message, timestamp, is_from_user
-        FROM chat_messages
-        WHERE phone_number = ?
-        ORDER BY timestamp DESC
-        LIMIT ?
-      `)
-        .bind(phoneNumber, limit)
-        .all();
+      const messages = await this.db
+        .select()
+        .from(chat_messages)
+        .where(eq(chat_messages.phone_number, phoneNumber))
+        .orderBy(desc(chat_messages.timestamp))
+        .limit(limit);
 
-      return result.results as ChatMessage[];
+      return messages;
     } catch (error) {
       console.error('Error retrieving conversation history:', error);
       return [];
@@ -77,15 +81,11 @@ export class DatabaseService {
   async getMessageCount(phoneNumber: string): Promise<number> {
     try {
       const result = await this.db
-        .prepare(`
-        SELECT COUNT(*) as count
-        FROM chat_messages
-        WHERE phone_number = ?
-      `)
-        .bind(phoneNumber)
-        .first();
+        .select({ count: count() })
+        .from(chat_messages)
+        .where(eq(chat_messages.phone_number, phoneNumber));
 
-      return (result as any)?.count || 0;
+      return result[0]?.count || 0;
     } catch (error) {
       console.error('Error getting message count:', error);
       return 0;
@@ -101,12 +101,11 @@ export class DatabaseService {
       cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
 
       await this.db
-        .prepare(`
-        DELETE FROM chat_messages
-        WHERE phone_number = ? AND timestamp < ?
-      `)
-        .bind(phoneNumber, cutoffDate.toISOString())
-        .run();
+        .delete(chat_messages)
+        .where(
+          eq(chat_messages.phone_number, phoneNumber) &&
+            lt(chat_messages.timestamp, cutoffDate.toISOString())
+        );
     } catch (error) {
       console.error('Error deleting old messages:', error);
     }

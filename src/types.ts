@@ -38,13 +38,7 @@ export interface WhatsAppMessage {
   }>;
 }
 
-export interface ChatMessage {
-  id: string;
-  phone_number: string;
-  message: string;
-  timestamp: string;
-  is_from_user: boolean;
-}
+// ChatMessage type is now imported from schema.ts
 
 export interface WhatsAppResponse {
   messaging_product: string;

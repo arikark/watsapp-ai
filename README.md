@@ -146,6 +146,24 @@ Access the admin dashboard at `https://your-worker.your-subdomain.workers.dev/ad
 
 ## 🗄️ Database Schema
 
+This project uses [Drizzle ORM](https://orm.drizzle.team/) for type-safe database operations with Cloudflare D1.
+
+### Database Setup
+
+```bash
+# Generate new migrations
+npm run db:generate
+
+# Apply migrations to local database
+npm run db:migrate:local
+
+# Apply migrations to remote database
+npm run db:migrate
+
+# Open Drizzle Studio (optional)
+npm run db:studio
+```
+
 ### chat_messages Table
 
 ```sql
@@ -157,6 +175,23 @@ CREATE TABLE chat_messages (
     is_from_user INTEGER NOT NULL DEFAULT 0,
     created_at TEXT DEFAULT (datetime('now'))
 );
+```
+
+### Schema Definition
+
+The database schema is defined in `src/schema.ts` using Drizzle's type-safe schema builder:
+
+```typescript
+import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+
+export const chat_messages = sqliteTable('chat_messages', {
+  id: text('id').primaryKey(),
+  phone_number: text('phone_number').notNull(),
+  message: text('message').notNull(),
+  timestamp: text('timestamp').notNull(),
+  is_from_user: integer('is_from_user', { mode: 'boolean' }).notNull().default(false),
+  created_at: text('created_at').default('(datetime(\'now\'))'),
+});
 ```
 
 ## 🔄 Message Flow
