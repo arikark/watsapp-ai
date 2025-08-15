@@ -1,0 +1,16 @@
+{
+  "compatibility_date": "2025-04-01",
+  "main": "src/index.ts",
+  "name": "watsapp-ai",
+  "upload_source_maps": true,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_id": "998e30b1-8472-49d5-b756-4c24796be20b",
+      "database_name": "watsapp-ai"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
