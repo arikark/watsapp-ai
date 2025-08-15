@@ -8,7 +8,7 @@ export const chat_messages = sqliteTable('chat_messages', {
   is_from_user: integer('is_from_user', { mode: 'boolean' })
     .notNull()
     .default(false),
-  created_at: text('created_at').default("(datetime('now'))"),
+  created_at: text('created_at').default('datetime(\'now\')'),
 });
 
 export type ChatMessage = typeof chat_messages.$inferSelect;

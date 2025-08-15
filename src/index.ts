@@ -5,6 +5,10 @@ import { renderAdminDashboard } from './admin_dashboard';
 import { AIService } from './ai_service';
 import { DatabaseService } from './database_service';
 import type { Env, WhatsAppMessage } from './types';
+import {
+  isAuthorizedPhoneNumber,
+  validateAuthorizedPhoneNumber,
+} from './utils';
 import { WhatsAppService } from './whatsapp_service';
 
 const app = new Hono<{ Bindings: Env }>();
@@ -69,6 +73,17 @@ app.post('/webhook', async (c) => {
           if (value.messages && value.messages.length > 0) {
             for (const message of value.messages) {
               if (message.type === 'text') {
+                // Validate that the message is from the authorized phone number
+                if (!isAuthorizedPhoneNumber(message.from)) {
+                  console.log(
+                    `Rejected message from unauthorized number: ${message.from}`
+                  );
+
+                  // Send a message to unauthorized users
+                  await sendUnauthorizedMessage(c.env, message.from, message.id);
+                  continue; // Skip processing this message
+                }
+
                 await processMessage(
                   c.env,
                   message.from,
@@ -98,8 +113,14 @@ app.post('/api/send', async (c) => {
       return c.json({ error: 'Phone number and message are required' }, 400);
     }
 
+    // Validate that the target phone number is the authorized number
+    if (!isAuthorizedPhoneNumber(phoneNumber)) {
+      return c.json({ error: 'Unauthorized phone number' }, 403);
+    }
+
     const whatsappService = new WhatsAppService(c.env);
     const formattedPhone = whatsappService.formatPhoneNumber(phoneNumber);
+
     const result = await whatsappService.sendMessage(formattedPhone, message);
 
     if (result) {
@@ -133,8 +154,14 @@ app.post('/api/send-template', async (c) => {
       );
     }
 
+    // Validate that the target phone number is the authorized number
+    if (!isAuthorizedPhoneNumber(phoneNumber)) {
+      return c.json({ error: 'Unauthorized phone number' }, 403);
+    }
+
     const whatsappService = new WhatsAppService(c.env);
     const formattedPhone = whatsappService.formatPhoneNumber(phoneNumber);
+
     const result = await whatsappService.sendTemplateMessage(
       formattedPhone,
       templateName,
@@ -161,6 +188,12 @@ app.post('/api/send-template', async (c) => {
 app.get('/api/conversation/:phoneNumber', async (c) => {
   try {
     const phoneNumber = c.req.param('phoneNumber');
+
+    // Validate that the phone number is the authorized number
+    if (!isAuthorizedPhoneNumber(phoneNumber)) {
+      return c.json({ error: 'Unauthorized phone number' }, 403);
+    }
+
     const limit = parseInt(c.req.query('limit') || '10');
 
     const dbService = new DatabaseService(c.env);
@@ -177,6 +210,12 @@ app.get('/api/conversation/:phoneNumber', async (c) => {
 app.get('/api/stats/:phoneNumber', async (c) => {
   try {
     const phoneNumber = c.req.param('phoneNumber');
+
+    // Validate that the phone number is the authorized number
+    if (!isAuthorizedPhoneNumber(phoneNumber)) {
+      return c.json({ error: 'Unauthorized phone number' }, 403);
+    }
+
     const dbService = new DatabaseService(c.env);
     const messageCount = await dbService.getMessageCount(phoneNumber);
 
@@ -191,6 +230,31 @@ app.get('/api/stats/:phoneNumber', async (c) => {
   }
 });
 
+// Function to send unauthorized message to users
+async function sendUnauthorizedMessage(
+  env: Env,
+  from: string,
+  messageId: string
+) {
+  try {
+    const whatsappService = new WhatsAppService(env);
+
+    // Mark the original message as read
+    await whatsappService.markMessageAsRead(messageId);
+
+    // Send unauthorized message
+    const formattedPhone = whatsappService.formatPhoneNumber(from);
+    await whatsappService.sendMessage(
+      formattedPhone,
+      'Sorry, but this WhatsApp number is not authorized to use this AI chatbot. Please contact the administrator for access.'
+    );
+
+    console.log(`Sent unauthorized message to ${from}`);
+  } catch (error) {
+    console.error('Error sending unauthorized message:', error);
+  }
+}
+
 // Function to process incoming WhatsApp messages
 async function processMessage(
   env: Env,
@@ -198,6 +262,14 @@ async function processMessage(
   message: string,
   messageId: string
 ) {
+  // Additional validation to ensure only authorized phone number can send messages
+  if (!isAuthorizedPhoneNumber(from)) {
+    console.log(
+      `Rejected message from unauthorized number in processMessage: ${from}`
+    );
+    return;
+  }
+
   try {
     const aiService = new AIService(env);
     const whatsappService = new WhatsAppService(env);

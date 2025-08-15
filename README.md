@@ -119,6 +119,18 @@ npm run deploy
 | `WHATSAPP_PHONE_NUMBER_ID` | Your WhatsApp phone number ID | Yes |
 | `WHATSAPP_VERIFY_TOKEN` | Webhook verification token | Yes |
 
+### Phone Number Validation
+
+The application is configured to only process messages from the authorized phone number `+972585722391`. This validation is applied at multiple levels:
+
+- **Webhook Processing**: Incoming messages are validated before processing
+- **API Endpoints**: All API endpoints validate phone numbers
+- **Message Processing**: Additional validation in the message processing function
+- **User Notification**: Unauthorized users receive a WhatsApp message explaining they don't have access
+- **Format Flexibility**: Accepts phone numbers both with (`+972585722391`) and without (`972585722391`) the `+` prefix
+
+To change the authorized phone number, update the `AUTHORIZED_PHONE_NUMBER` constant in `src/utils.ts`.
+
 ## 📱 Usage
 
 ### Webhook Endpoints
@@ -198,10 +210,13 @@ export const chat_messages = sqliteTable('chat_messages', {
 
 1. **User sends message** → WhatsApp Business API
 2. **Webhook receives message** → `/webhook` endpoint
-3. **Message saved to database** → D1 database
-4. **AI generates response** → Cloudflare Workers AI
-5. **Response sent back** → WhatsApp Business API
-6. **Response saved to database** → D1 database
+3. **Phone number validation** → Check if user is authorized
+4. **If unauthorized** → Send "not authorized" message and stop
+5. **If authorized** → Continue with processing:
+   - **Message saved to database** → D1 database
+   - **AI generates response** → Cloudflare Workers AI
+   - **Response sent back** → WhatsApp Business API
+   - **Response saved to database** → D1 database
 
 ## 🧪 Testing
 
@@ -286,6 +301,7 @@ Your setup is working correctly when you see:
 ## 🔒 Security
 
 - **Webhook Verification**: All webhook requests are verified
+- **Phone Number Validation**: Only messages from `+972585722391` are processed
 - **Environment Variables**: Sensitive data stored securely
 - **Input Validation**: All inputs are validated and sanitized
 - **Rate Limiting**: Consider implementing rate limiting for production
