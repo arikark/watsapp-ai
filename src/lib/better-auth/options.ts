@@ -1,4 +1,5 @@
 import type { BetterAuthOptions } from 'better-auth';
+import { phoneNumber } from 'better-auth/plugins/phone-number';
 
 /**
  * Custom options for Better Auth
@@ -15,6 +16,13 @@ export const betterAuthOptions: BetterAuthOptions = {
    * @default "/api/auth"
    */
   basePath: '/api',
+  plugins: [
+    phoneNumber({
+      sendOTP: ({ phoneNumber, code }, request) => {
+        console.log('Sending OTP to', phoneNumber, 'with code', code);
+      },
+    }),
+  ],
 
   // .... More options
 };

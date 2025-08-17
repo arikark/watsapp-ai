@@ -1,16 +1,13 @@
 import { count, desc, eq, lt } from 'drizzle-orm';
 import { createDb } from '../db/db';
-import {
-  type ChatMessage,
-  chat_messages,
-  type NewChatMessage,
-} from '../db/schema';
+import { chat_messages } from '../db/schema';
+import type { ChatMessage, NewChatMessage } from '../db/types';
 
 export class DatabaseService {
   private db: ReturnType<typeof createDb>;
 
   constructor(env: Env) {
-    this.db = createDb(env);
+    this.db = createDb(env.DATABASE_URL);
   }
 
   async saveMessage(

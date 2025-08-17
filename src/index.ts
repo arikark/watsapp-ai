@@ -1,3 +1,4 @@
+import { createAuthClient } from 'better-auth/client';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
@@ -16,11 +17,11 @@ app.use('*', logger());
 app.use('*', cors());
 
 // Auth middleware for all API routes except webhook
-app.on(['GET', 'POST'], '/api/*', async (c, next) => {
+app.on(['GET', 'POST'], '/api/auth/**', async (c) => {
   // Skip auth for webhook endpoints
-  if (c.req.path === '/api/webhook') {
-    return next();
-  }
+  // if (c.req.path === '/api/webhook') {
+  //   return next();
+  // }
   return auth(c.env).handler(c.req.raw);
 });
 // Health check endpoint
@@ -63,6 +64,13 @@ app.get('/api/webhook', (c) => {
 app.post('/api/webhook', async (c) => {
   try {
     // If number is not in the database, sign new user up using clerk
+    const authClient = auth(c.env);
+    const data = await authClient.api.sendPhoneNumberOTP({
+      body: {
+        phoneNumber: '+1234567890', // required
+      },
+    });
+    console.log(data);
 
     const body = (await c.req.json()) as WhatsAppMessage;
 
