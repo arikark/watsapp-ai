@@ -33,7 +33,7 @@
   "scripts": {
     "cf-typegen": "wrangler types",
     "check": "tsc && wrangler deploy --dry-run",
-    "deploy": "pnpm run cf-gen-types && wrangler secret bulk .dev.vars.production && wrangler deploy --minify",
+    "deploy": "pnpm run cf-typegen && wrangler secret bulk .dev.vars.production && wrangler deploy --minify",
     "dev": "wrangler dev",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

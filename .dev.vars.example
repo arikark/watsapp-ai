@@ -1,0 +1,24 @@
+# Create .dev.vars.production and .dev.vars file and fill in the values.
+
+
+# WhatsApp Business API Configuration
+# Get these from Meta Developer Console: https://developers.facebook.com/apps/
+WHATSAPP_TOKEN=your_whatsapp_business_token_here
+WHATSAPP_PHONE_NUMBER_ID=your_phone_number_id_here
+WHATSAPP_VERIFY_TOKEN=your_custom_webhook_verify_token_here
+
+# Better Auth Configuration
+# Generate a secure secret: openssl rand -base64 32
+BETTER_AUTH_SECRET=your_better_auth_secret_here
+# Your application's base URL (for development: http://localhost:8787)
+BETTER_AUTH_URL=http://localhost:8787
+
+# Database Configuration
+# PostgreSQL connection string (e.g., Neon, Supabase, etc.)
+DATABASE_URL=postgresql://username:password@host:port/database?sslmode=require
+
+# Cloudflare AI Binding
+# This is automatically configured by Cloudflare Workers
+# No need to set this in .dev.vars file
+# AI=your_ai_binding_name
+

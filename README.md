@@ -47,12 +47,26 @@ npm install
 
 ### 2. Configure Environment Variables
 
-Create a `.dev.vars` file in your project root:
+Copy the example file and configure your environment variables:
+
+```bash
+cp .dev.vars.example .dev.vars
+```
+
+Then edit `.dev.vars` with your actual values:
 
 ```env
+# WhatsApp Business API Configuration
 WHATSAPP_TOKEN=your_whatsapp_business_api_token
 WHATSAPP_PHONE_NUMBER_ID=your_phone_number_id
 WHATSAPP_VERIFY_TOKEN=your_webhook_verify_token
+
+# Better Auth Configuration
+BETTER_AUTH_SECRET=your_better_auth_secret
+BETTER_AUTH_URL=http://localhost:8787
+
+# Database Configuration
+DATABASE_URL=your_postgresql_connection_string
 ```
 
 ### 3. Set up Cloudflare D1 Database
@@ -113,11 +127,22 @@ npm run deploy
 
 ### Environment Variables
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `WHATSAPP_TOKEN` | WhatsApp Business API access token | Yes |
-| `WHATSAPP_PHONE_NUMBER_ID` | Your WhatsApp phone number ID | Yes |
-| `WHATSAPP_VERIFY_TOKEN` | Webhook verification token | Yes |
+Copy `.dev.vars.example` to `.dev.vars` and fill in your actual values:
+
+```bash
+cp .dev.vars.example .dev.vars
+```
+
+| Variable | Description | Required | Example |
+|----------|-------------|----------|---------|
+| `WHATSAPP_TOKEN` | WhatsApp Business API access token | Yes | `EAAPze0eKao8BPKhJANb3xF9pgNdqX8uyZAWQ4ckBn1k66ZC8cvkWMIskmoDqfGb9wjZAEIr51VGWxf8EnSPvcsLNFJwXyHCETZBbV0CxmDQYgwmXgUIkFLN6PGn3dyeYC9wQsSBXwcdqh0hGdJKEzqtFPC2PzXZAk3HwRSQFnRd0ZAhP2ZCWZAZCwm3BjabsyepwAxpiHgwdNZCG0dj45hgMUyag0hbGu6AJY7Ew6fP9gZD` |
+| `WHATSAPP_PHONE_NUMBER_ID` | Your WhatsApp phone number ID | Yes | `711056175433210` |
+| `WHATSAPP_VERIFY_TOKEN` | Webhook verification token (custom string) | Yes | `watsapp_ai_webhook_verify_2024_secure_token` |
+| `BETTER_AUTH_SECRET` | Secret for Better Auth (generate with `openssl rand -base64 32`) | Yes | `CMtImsaSAKHkqFdh0Q0zNYppo8AaxuVX` |
+| `BETTER_AUTH_URL` | Your application's base URL | Yes | `http://localhost:8787` (dev) or `https://your-worker.your-subdomain.workers.dev` (prod) |
+| `DATABASE_URL` | PostgreSQL connection string | Yes | `postgresql://username:password@host:port/database?sslmode=require` |
+
+**Note**: The `AI` binding is automatically configured by Cloudflare Workers and doesn't need to be set in your environment variables.
 
 ### Phone Number Validation
 
@@ -312,3 +337,7 @@ For support and questions:
 **Test it by messaging your WhatsApp Business number and enjoy chatting with your AI assistant!** 🤖💬
 
 Built with ❤️ using Cloudflare Workers, Hono, and Cloudflare Workers AI
+
+
+
+See https://hono.dev/examples/better-auth-on-cloudflare for more information on how to use better-auth with Hono.
