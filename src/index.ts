@@ -56,9 +56,9 @@ app.get('/webhook', (c) => {
 
 // WhatsApp webhook for receiving messages
 app.post('/webhook', async (c) => {
-  const auth = getAuth(c);
-
   try {
+    // If number is not in the database, sign new user up using clerk
+
     const body = (await c.req.json()) as WhatsAppMessage;
 
     // Verify this is a WhatsApp message
@@ -90,6 +90,12 @@ app.post('/webhook', async (c) => {
                   );
                   continue; // Skip processing this message
                 }
+
+                const clerkClient = c.get('clerk');
+
+                await clerkClient.users.createUser({
+                  phoneNumber: [message.from],
+                });
 
                 await processMessage(
                   c.env,
