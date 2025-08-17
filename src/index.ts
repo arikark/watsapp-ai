@@ -1,21 +1,22 @@
+import { clerkMiddleware, getAuth } from '@hono/clerk-auth';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { renderAdminDashboard } from './admin_dashboard';
-import { AIService } from './ai_service';
-import { DatabaseService } from './database_service';
+import { AIService } from './services/ai_service';
+import { DatabaseService } from './services/database_service';
+import { isAuthorizedPhoneNumber } from './services/utils';
+import { WhatsAppService } from './services/whatsapp_service';
 import type { Env, WhatsAppMessage } from './types';
-import {
-  isAuthorizedPhoneNumber,
-  validateAuthorizedPhoneNumber,
-} from './utils';
-import { WhatsAppService } from './whatsapp_service';
 
 const app = new Hono<{ Bindings: Env }>();
 
 // Middleware
 app.use('*', logger());
 app.use('*', cors());
+
+// Clerk middleware
+app.use('*', clerkMiddleware());
 
 // Health check endpoint
 app.get('/', (c) => {
@@ -55,6 +56,8 @@ app.get('/webhook', (c) => {
 
 // WhatsApp webhook for receiving messages
 app.post('/webhook', async (c) => {
+  const auth = getAuth(c);
+
   try {
     const body = (await c.req.json()) as WhatsAppMessage;
 
@@ -80,7 +83,11 @@ app.post('/webhook', async (c) => {
                   );
 
                   // Send a message to unauthorized users
-                  await sendUnauthorizedMessage(c.env, message.from, message.id);
+                  await sendUnauthorizedMessage(
+                    c.env,
+                    message.from,
+                    message.id
+                  );
                   continue; // Skip processing this message
                 }
 
@@ -101,132 +108,6 @@ app.post('/webhook', async (c) => {
   } catch (error) {
     console.error('Error processing webhook:', error);
     return c.text('Internal Server Error', 500);
-  }
-});
-
-// API endpoint to send a message (for testing)
-app.post('/api/send', async (c) => {
-  try {
-    const { phoneNumber, message } = await c.req.json();
-
-    if (!phoneNumber || !message) {
-      return c.json({ error: 'Phone number and message are required' }, 400);
-    }
-
-    // Validate that the target phone number is the authorized number
-    if (!isAuthorizedPhoneNumber(phoneNumber)) {
-      return c.json({ error: 'Unauthorized phone number' }, 403);
-    }
-
-    const whatsappService = new WhatsAppService(c.env);
-    const formattedPhone = whatsappService.formatPhoneNumber(phoneNumber);
-
-    const result = await whatsappService.sendMessage(formattedPhone, message);
-
-    if (result) {
-      return c.json({
-        success: true,
-        messageId: result.messages[0]?.id,
-        phoneNumber: formattedPhone,
-      });
-    } else {
-      return c.json({ error: 'Failed to send message' }, 500);
-    }
-  } catch (error) {
-    console.error('Error sending message:', error);
-    return c.json({ error: 'Internal server error' }, 500);
-  }
-});
-
-// API endpoint to send template message (for testing)
-app.post('/api/send-template', async (c) => {
-  try {
-    const {
-      phoneNumber,
-      templateName,
-      languageCode = 'en_US',
-    } = await c.req.json();
-
-    if (!phoneNumber || !templateName) {
-      return c.json(
-        { error: 'Phone number and template name are required' },
-        400
-      );
-    }
-
-    // Validate that the target phone number is the authorized number
-    if (!isAuthorizedPhoneNumber(phoneNumber)) {
-      return c.json({ error: 'Unauthorized phone number' }, 403);
-    }
-
-    const whatsappService = new WhatsAppService(c.env);
-    const formattedPhone = whatsappService.formatPhoneNumber(phoneNumber);
-
-    const result = await whatsappService.sendTemplateMessage(
-      formattedPhone,
-      templateName,
-      languageCode
-    );
-
-    if (result) {
-      return c.json({
-        success: true,
-        messageId: result.messages[0]?.id,
-        phoneNumber: formattedPhone,
-        templateName,
-      });
-    } else {
-      return c.json({ error: 'Failed to send template message' }, 500);
-    }
-  } catch (error) {
-    console.error('Error sending template message:', error);
-    return c.json({ error: 'Internal server error' }, 500);
-  }
-});
-
-// API endpoint to get conversation history
-app.get('/api/conversation/:phoneNumber', async (c) => {
-  try {
-    const phoneNumber = c.req.param('phoneNumber');
-
-    // Validate that the phone number is the authorized number
-    if (!isAuthorizedPhoneNumber(phoneNumber)) {
-      return c.json({ error: 'Unauthorized phone number' }, 403);
-    }
-
-    const limit = parseInt(c.req.query('limit') || '10');
-
-    const dbService = new DatabaseService(c.env);
-    const messages = await dbService.getConversationHistory(phoneNumber, limit);
-
-    return c.json({ messages });
-  } catch (error) {
-    console.error('Error getting conversation:', error);
-    return c.json({ error: 'Internal server error' }, 500);
-  }
-});
-
-// API endpoint to get conversation statistics
-app.get('/api/stats/:phoneNumber', async (c) => {
-  try {
-    const phoneNumber = c.req.param('phoneNumber');
-
-    // Validate that the phone number is the authorized number
-    if (!isAuthorizedPhoneNumber(phoneNumber)) {
-      return c.json({ error: 'Unauthorized phone number' }, 403);
-    }
-
-    const dbService = new DatabaseService(c.env);
-    const messageCount = await dbService.getMessageCount(phoneNumber);
-
-    return c.json({
-      phoneNumber,
-      messageCount,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error('Error getting stats:', error);
-    return c.json({ error: 'Internal server error' }, 500);
   }
 });
 

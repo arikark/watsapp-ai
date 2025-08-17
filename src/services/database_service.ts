@@ -4,8 +4,8 @@ import {
   chat_messages,
   createDb,
   type NewChatMessage,
-} from './db';
-import type { Env } from './types';
+} from '../db';
+import type { Env } from '../types';
 
 export class DatabaseService {
   private db: ReturnType<typeof createDb>;

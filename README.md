@@ -142,10 +142,6 @@ To change the authorized phone number, update the `AUTHORIZED_PHONE_NUMBER` cons
 
 - **GET `/`**: Health check
 - **GET `/admin`**: Admin dashboard
-- **POST `/api/send`**: Send test message
-- **POST `/api/send-template`**: Send template message
-- **GET `/api/conversation/:phoneNumber`**: Get conversation history
-- **GET `/api/stats/:phoneNumber`**: Get conversation statistics
 
 ### Admin Dashboard
 
@@ -226,34 +222,7 @@ export const chat_messages = sqliteTable('chat_messages', {
 npm run dev
 ```
 
-### Send Test Message
 
-```bash
-curl -X POST https://your-worker.your-subdomain.workers.dev/api/send \
-  -H "Content-Type: application/json" \
-  -d '{
-    "phoneNumber": "+1234567890",
-    "message": "Hello, AI!"
-  }'
-```
-
-### Send Template Message
-
-```bash
-curl -X POST https://your-worker.your-subdomain.workers.dev/api/send-template \
-  -H "Content-Type: application/json" \
-  -d '{
-    "phoneNumber": "+1234567890",
-    "templateName": "hello_world",
-    "languageCode": "en_US"
-  }'
-```
-
-### Get Conversation History
-
-```bash
-curl https://your-worker.your-subdomain.workers.dev/api/conversation/+1234567890
-```
 
 ## 🚀 Deployment
 

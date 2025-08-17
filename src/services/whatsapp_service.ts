@@ -1,4 +1,4 @@
-import type { Env, WhatsAppResponse } from './types';
+import type { Env, WhatsAppResponse } from '../types';
 
 export class WhatsAppService {
   private token: string;
@@ -48,45 +48,6 @@ export class WhatsAppService {
     }
   }
 
-  async sendTemplateMessage(to: string, templateName: string, languageCode: string = 'en_US'): Promise<WhatsAppResponse | null> {
-    if (!this.token || !this.phoneNumberId) {
-      console.error('WhatsApp credentials not configured');
-      return null;
-    }
-
-    try {
-      const response = await fetch(`${this.baseUrl}/messages`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messaging_product: 'whatsapp',
-          to: to,
-          type: 'template',
-          template: {
-            name: templateName,
-            language: {
-              code: languageCode
-            }
-          }
-        })
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('WhatsApp API error:', response.status, errorText);
-        return null;
-      }
-
-      const result = await response.json() as WhatsAppResponse;
-      return result;
-    } catch (error) {
-      console.error('Error sending WhatsApp template message:', error);
-      return null;
-    }
-  }
 
   async sendTypingIndicator(to: string, isTyping: boolean = true): Promise<boolean> {
     if (!this.token || !this.phoneNumberId) {

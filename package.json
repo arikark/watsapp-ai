@@ -20,9 +20,11 @@
   },
   "dependencies": {
     "@cloudflare/d1": "^1.4.1",
+    "@hono/clerk-auth": "^2.0.0",
     "drizzle-orm": "^0.44.4",
-    "hono": "^4.1.0",
+    "hono": "^4.8.4",
     "qrcode": "^1.5.3",
+    "workers-ai-provider": "^0.7.5",
     "zod": "^3.25.0"
   },
   "devDependencies": {

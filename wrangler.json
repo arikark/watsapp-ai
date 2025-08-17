@@ -10,7 +10,8 @@
     {
       "binding": "DB",
       "database_id": "998e30b1-8472-49d5-b756-4c24796be20b",
-      "database_name": "watsapp-ai"
+      "database_name": "watsapp-ai",
+      "migrations_dir": "drizzle/migrations"
     }
   ],
   "observability": {
