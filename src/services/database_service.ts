@@ -1,10 +1,10 @@
 import { count, desc, eq, lt } from 'drizzle-orm';
+import { createDb } from '../db/db';
 import {
   type ChatMessage,
   chat_messages,
-  createDb,
   type NewChatMessage,
-} from '../db/db';
+} from '../db/schema';
 
 export class DatabaseService {
   private db: ReturnType<typeof createDb>;
