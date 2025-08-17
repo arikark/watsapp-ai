@@ -1,6 +1,5 @@
 import { generateText } from 'ai';
 import { createWorkersAI, type WorkersAI } from 'workers-ai-provider';
-import type { Env } from '../types';
 
 export class AIService {
   private ai: WorkersAI;
@@ -18,7 +17,7 @@ export class AIService {
       const fullPrompt = this.buildPrompt(prompt, conversationHistory);
 
       const result = await generateText({
-        model: model,
+        model,
         prompt: fullPrompt,
         temperature: 0.7,
         maxTokens: 500,

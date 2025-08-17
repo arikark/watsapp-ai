@@ -1,13 +1,14 @@
-import { clerkMiddleware, getAuth } from '@hono/clerk-auth';
+import { clerkMiddleware } from '@hono/clerk-auth';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { renderAdminDashboard } from './admin_dashboard';
+import { auth } from './lib/better-auth';
 import { AIService } from './services/ai_service';
 import { DatabaseService } from './services/database_service';
 import { isAuthorizedPhoneNumber } from './services/utils';
 import { WhatsAppService } from './services/whatsapp_service';
-import type { Env, WhatsAppMessage } from './types';
+import type { WhatsAppMessage } from './types';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -17,7 +18,9 @@ app.use('*', cors());
 
 // Clerk middleware
 app.use('*', clerkMiddleware());
-
+app.on(['GET', 'POST'], '/api/*', (c) => {
+  return auth(c.env).handler(c.req.raw);
+});
 // Health check endpoint
 app.get('/', (c) => {
   return c.json({

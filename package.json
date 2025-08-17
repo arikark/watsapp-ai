@@ -4,45 +4,40 @@
   "cloudflare": {
     "label": "Worker + D1 Database",
     "products": [
-      "Workers",
-      "D1"
-    ],
-    "categories": [
-      "storage"
+      "Workers"
     ],
     "icon_urls": [
       "https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/c6fc5da3-1a0a-4608-b2f1-9628577ec800/public",
       "https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/5ca0ca32-e897-4699-d4c1-6b680512f000/public"
     ],
-    "docs_url": "https://developers.cloudflare.com/d1/",
-    "preview_image_url": "https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/cb7cb0a9-6102-4822-633c-b76b7bb25900/public",
-    "publish": true
+    "preview_image_url": "https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/cb7cb0a9-6102-4822-633c-b76b7bb25900/public"
   },
   "dependencies": {
-    "@cloudflare/d1": "^1.4.1",
     "@hono/clerk-auth": "^2.0.0",
-    "drizzle-orm": "^0.44.4",
-    "hono": "^4.8.4",
+    "@neondatabase/serverless": "^1.0.0",
+    "ai": "^4.1.45",
+    "better-auth": "^1.2.8",
+    "drizzle-orm": "^0.43.1",
+    "hono": "^4.7.10",
     "qrcode": "^1.5.3",
     "workers-ai-provider": "^0.7.5",
     "zod": "^3.25.0"
   },
   "devDependencies": {
+    "@types/node": "^22.15.21",
     "@cloudflare/workers-types": "^4.20250617.0",
-    "drizzle-kit": "^0.31.4",
+    "drizzle-kit": "^0.31.1",
     "typescript": "^5.8.3",
-    "wrangler": "^4.21.2"
+    "wrangler": "^4.16.1"
   },
   "scripts": {
     "cf-typegen": "wrangler types",
     "check": "tsc && wrangler deploy --dry-run",
-    "deploy": "wrangler deploy",
-    "dev": "pnpm seedLocalD1 && wrangler dev",
-    "predeploy": "wrangler d1 migrations apply DB --remote",
-    "seedLocalD1": "wrangler d1 migrations apply DB --local",
+    "deploy": "pnpm run cf-gen-types && wrangler secret bulk .dev.vars.production && wrangler deploy --minify",
+    "dev": "wrangler dev",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "wrangler d1 migrations apply DB --remote",
-    "db:migrate:local": "wrangler d1 migrations apply DB --local",
-    "db:studio": "drizzle-kit studio"
-  }
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "better-auth-gen-schema": "pnpm dlx @better-auth/cli@latest generate --config ./better-auth.config.ts --output ./src/db/schema.ts"
+  },
 }

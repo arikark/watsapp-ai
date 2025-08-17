@@ -1,11 +1,3 @@
-export interface Env {
-  AI: Ai;
-  DB: D1Database;
-  WHATSAPP_TOKEN?: string;
-  WHATSAPP_PHONE_NUMBER_ID?: string;
-  WHATSAPP_VERIFY_TOKEN?: string;
-}
-
 export interface WhatsAppMessage {
   object: string;
   entry: Array<{

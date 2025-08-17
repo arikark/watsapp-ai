@@ -1,10 +1,14 @@
 import { defineConfig } from 'drizzle-kit';
 
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL is not set');
+}
+
 export default defineConfig({
-  schema: './src/schema.ts',
-  out: './migrations',
-  dialect: 'sqlite',
+  out: './drizzle',
+  schema: './src/db/schema.ts',
+  dialect: 'postgresql',
   dbCredentials: {
-    url: 'local.db', // This is just for drizzle-kit, actual DB is handled by Cloudflare
+    url: process.env.DATABASE_URL,
   },
 });
