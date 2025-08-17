@@ -1,4 +1,4 @@
-import type { Env, WhatsAppResponse } from '../types';
+import type { WhatsAppResponse } from '../types';
 
 export class WhatsAppService {
   private token: string;
@@ -11,7 +11,10 @@ export class WhatsAppService {
     this.baseUrl = `https://graph.facebook.com/v22.0/${this.phoneNumberId}`;
   }
 
-  async sendMessage(to: string, message: string): Promise<WhatsAppResponse | null> {
+  async sendMessage(
+    to: string,
+    message: string
+  ): Promise<WhatsAppResponse | null> {
     if (!this.token || !this.phoneNumberId) {
       console.error('WhatsApp credentials not configured');
       return null;
@@ -21,7 +24,7 @@ export class WhatsAppService {
       const response = await fetch(`${this.baseUrl}/messages`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.token}`,
+          Authorization: `Bearer ${this.token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -29,9 +32,9 @@ export class WhatsAppService {
           to: to,
           type: 'text',
           text: {
-            body: message
-          }
-        })
+            body: message,
+          },
+        }),
       });
 
       if (!response.ok) {
@@ -40,7 +43,7 @@ export class WhatsAppService {
         return null;
       }
 
-      const result = await response.json() as WhatsAppResponse;
+      const result = (await response.json()) as WhatsAppResponse;
       return result;
     } catch (error) {
       console.error('Error sending WhatsApp message:', error);
@@ -48,8 +51,10 @@ export class WhatsAppService {
     }
   }
 
-
-  async sendTypingIndicator(to: string, isTyping: boolean = true): Promise<boolean> {
+  async sendTypingIndicator(
+    to: string,
+    isTyping: boolean = true
+  ): Promise<boolean> {
     if (!this.token || !this.phoneNumberId) {
       return false;
     }
@@ -58,7 +63,7 @@ export class WhatsAppService {
       const response = await fetch(`${this.baseUrl}/messages`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.token}`,
+          Authorization: `Bearer ${this.token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -69,9 +74,9 @@ export class WhatsAppService {
           reaction: {
             messaging_product: 'whatsapp',
             recipient_id: to,
-            type: isTyping ? 'typing' : 'read'
-          }
-        })
+            type: isTyping ? 'typing' : 'read',
+          },
+        }),
       });
 
       return response.ok;
@@ -90,14 +95,14 @@ export class WhatsAppService {
       const response = await fetch(`${this.baseUrl}/messages`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.token}`,
+          Authorization: `Bearer ${this.token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           messaging_product: 'whatsapp',
           status: 'read',
-          message_id: messageId
-        })
+          message_id: messageId,
+        }),
       });
 
       return response.ok;

@@ -1,7 +1,9 @@
+import type { InferAPI } from 'better-auth';
 import { createAuthClient } from 'better-auth/client';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
+import { request } from 'http';
 import { renderAdminDashboard } from './admin_dashboard';
 import { auth } from './lib/better-auth';
 import { AIService } from './services/ai_service';
@@ -64,13 +66,6 @@ app.get('/api/webhook', (c) => {
 app.post('/api/webhook', async (c) => {
   const authClient = auth(c.env);
 
-  const { data, error } = await authClient.api.sendPhoneNumberOTP({
-    body: {
-      phoneNumber: '+1234567890',
-    },
-  });
-  console.log(data);
-
   try {
     const body = (await c.req.json()) as WhatsAppMessage;
 
@@ -103,6 +98,27 @@ app.post('/api/webhook', async (c) => {
                   );
                   continue; // Skip processing this message
                 }
+
+                // @ts-ignore
+                // const { data } = await authClient.api.sendPhoneNumberOTP({
+                //   request: c.env,
+                //   body: {
+                //     phoneNumber: message.from,
+                //   },
+                // });
+
+                const data = await authClient.api.signInMagicLink({
+                  request: c.env,
+                  body: {
+                    email: `${message.from}@whatsapp-ai.com`, // required
+                    name: message.from,
+                    callbackURL: '/',
+                    newUserCallbackURL: '/',
+                    errorCallbackURL: '/',
+                  },
+                  // This endpoint requires session cookies.
+                  headers: c.req.header(),
+                });
 
                 await processMessage(
                   c.env,

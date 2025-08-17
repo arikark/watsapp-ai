@@ -1,5 +1,7 @@
 import type { BetterAuthOptions } from 'better-auth';
+import { magicLink } from 'better-auth/plugins';
 import { phoneNumber } from 'better-auth/plugins/phone-number';
+import { WhatsAppService } from '../../services/whatsapp_service';
 
 /**
  * Custom options for Better Auth
@@ -10,6 +12,7 @@ export const betterAuthOptions: BetterAuthOptions = {
   /**
    * The name of the application.
    */
+
   appName: 'WhatsApp AI',
   /**
    * Base path for Better Auth.
@@ -17,10 +20,31 @@ export const betterAuthOptions: BetterAuthOptions = {
    */
   basePath: '/api',
   plugins: [
+    magicLink({
+      sendMagicLink: async ({ email, token, url }, request) => {
+        const phoneNumber = email.split('@')[0];
+        console.log(phoneNumber);
+        const whatsappService = new WhatsAppService(request as Env);
+        const response = await whatsappService.sendMessage(
+          phoneNumber,
+          `Your magic link is ${url}`
+        );
+        console.log(response);
+        // send email to user
+      },
+    }),
     phoneNumber({
-      sendOTP: ({ phoneNumber, code }, request) => {
+      sendOTP: async ({ phoneNumber, code }, request) => {
+        console.log(request);
         console.log('Sending OTP to', phoneNumber, 'with code', code);
-        // Implement sending OTP code via SMS
+        // Send OTP to user via whatsapp
+        const whatsappService = new WhatsAppService(request as Env);
+        const response = await whatsappService.sendMessage(
+          phoneNumber,
+          `Your OTP is ${code}`
+        );
+        console.log(response);
+        // whatsappService.sendOTP(phoneNumber, code);
       },
       signUpOnVerification: {
         getTempEmail: (phoneNumber) => {

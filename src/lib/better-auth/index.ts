@@ -1,16 +1,14 @@
-import { neon } from '@neondatabase/serverless';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { drizzle } from 'drizzle-orm/neon-http';
+import { createDb } from '../../db/db';
 import * as schema from '../../db/schema';
 import { betterAuthOptions } from './options';
 
 /**
  * Better Auth Instance
  */
-export const auth = (env: Env): ReturnType<typeof betterAuth> => {
-  const sql = neon(env.DATABASE_URL);
-  const db = drizzle(sql);
+export const auth = (env: Env) => {
+  const db = createDb(env.DATABASE_URL);
 
   return betterAuth({
     ...betterAuthOptions,
