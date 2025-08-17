@@ -1,4 +1,3 @@
-import { clerkMiddleware } from '@hono/clerk-auth';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
@@ -16,9 +15,12 @@ const app = new Hono<{ Bindings: Env }>();
 app.use('*', logger());
 app.use('*', cors());
 
-// Clerk middleware
-app.use('*', clerkMiddleware());
-app.on(['GET', 'POST'], '/api/*', (c) => {
+// Auth middleware for all API routes except webhook
+app.on(['GET', 'POST'], '/api/*', async (c, next) => {
+  // Skip auth for webhook endpoints
+  if (c.req.path === '/api/webhook') {
+    return next();
+  }
   return auth(c.env).handler(c.req.raw);
 });
 // Health check endpoint
@@ -41,7 +43,7 @@ app.get('/admin', (c) => {
 });
 
 // WhatsApp webhook verification
-app.get('/webhook', (c) => {
+app.get('/api/webhook', (c) => {
   const mode = c.req.query('hub.mode');
   const token = c.req.query('hub.verify_token');
   const challenge = c.req.query('hub.challenge');
@@ -58,7 +60,7 @@ app.get('/webhook', (c) => {
 });
 
 // WhatsApp webhook for receiving messages
-app.post('/webhook', async (c) => {
+app.post('/api/webhook', async (c) => {
   try {
     // If number is not in the database, sign new user up using clerk
 
@@ -93,12 +95,6 @@ app.post('/webhook', async (c) => {
                   );
                   continue; // Skip processing this message
                 }
-
-                const clerkClient = c.get('clerk');
-
-                await clerkClient.users.createUser({
-                  phoneNumber: [message.from],
-                });
 
                 await processMessage(
                   c.env,
