@@ -20,6 +20,16 @@ export const betterAuthOptions: BetterAuthOptions = {
     phoneNumber({
       sendOTP: ({ phoneNumber, code }, request) => {
         console.log('Sending OTP to', phoneNumber, 'with code', code);
+        // Implement sending OTP code via SMS
+      },
+      signUpOnVerification: {
+        getTempEmail: (phoneNumber) => {
+          return `${phoneNumber}@whatsapp-ai.com`;
+        },
+        //optionally, you can also pass `getTempName` function to generate a temporary name for the user
+        getTempName: (phoneNumber) => {
+          return phoneNumber; //by default, it will use the phone number as the name
+        },
       },
     }),
   ],

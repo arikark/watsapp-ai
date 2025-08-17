@@ -17,7 +17,7 @@ app.use('*', logger());
 app.use('*', cors());
 
 // Auth middleware for all API routes except webhook
-app.on(['GET', 'POST'], '/api/auth/**', async (c) => {
+app.on(['GET', 'POST'], '/api/**', async (c) => {
   // Skip auth for webhook endpoints
   // if (c.req.path === '/api/webhook') {
   //   return next();
@@ -62,16 +62,16 @@ app.get('/api/webhook', (c) => {
 
 // WhatsApp webhook for receiving messages
 app.post('/api/webhook', async (c) => {
-  try {
-    // If number is not in the database, sign new user up using clerk
-    const authClient = auth(c.env);
-    const data = await authClient.api.sendPhoneNumberOTP({
-      body: {
-        phoneNumber: '+1234567890', // required
-      },
-    });
-    console.log(data);
+  const authClient = auth(c.env);
 
+  const { data, error } = await authClient.api.sendPhoneNumberOTP({
+    body: {
+      phoneNumber: '+1234567890',
+    },
+  });
+  console.log(data);
+
+  try {
     const body = (await c.req.json()) as WhatsAppMessage;
 
     // Verify this is a WhatsApp message
