@@ -1,9 +1,6 @@
-import type { InferAPI } from 'better-auth';
-import { createAuthClient } from 'better-auth/client';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import { request } from 'http';
 import { renderAdminDashboard } from './admin_dashboard';
 import { auth } from './lib/better-auth';
 import { AIService } from './services/ai_service';
@@ -37,7 +34,7 @@ app.get('/', (c) => {
 });
 
 // Admin dashboard
-app.get('/admin', (c) => {
+app.get('/admin', (_c) => {
   return new Response(renderAdminDashboard(), {
     headers: {
       'Content-Type': 'text/html',
@@ -107,8 +104,11 @@ app.post('/api/webhook', async (c) => {
                 //   },
                 // });
 
+                // const session = await authClient.api.getSession({
+                //   headers: c.req.header(),
+                // });
+
                 const data = await authClient.api.signInMagicLink({
-                  request: c.env,
                   body: {
                     email: `${message.from}@whatsapp-ai.com`, // required
                     name: message.from,

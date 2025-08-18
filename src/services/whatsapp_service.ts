@@ -112,7 +112,7 @@ export class WhatsAppService {
     }
   }
 
-  validateWebhook(token: string, mode: string, challenge: string): boolean {
+  validateWebhook(token: string, mode: string, _challenge: string): boolean {
     // This would be used to validate the webhook verification
     // You should implement proper validation logic here
     return mode === 'subscribe' && token === 'your_verify_token';
