@@ -130,6 +130,8 @@ export class WebhookVerificationService {
       return structureValidation;
     }
 
+    console.log('Webhook POST succeeded');
+
     return { isValid: true };
   }
 
