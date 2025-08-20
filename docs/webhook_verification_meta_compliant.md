@@ -1,10 +1,32 @@
 # 🔐 Meta-Compliant WhatsApp Webhook Verification
 
-This document explains the implementation of webhook verification following Meta's official documentation and security best practices.
+This document explains the implementation of webhook verification following Meta's official documentation and security best practices, using a dedicated `WebhookVerificationService`.
 
 ## Overview
 
-The webhook verification implementation follows Meta's official guidelines from the [Graph API Webhooks documentation](https://developers.facebook.com/docs/graph-api/webhooks/getting-started/#mtls-for-webhooks). This ensures maximum security and compatibility with WhatsApp Business API.
+The webhook verification implementation follows Meta's official guidelines from the [Graph API Webhooks documentation](https://developers.facebook.com/docs/graph-api/webhooks/getting-started/#mtls-for-webhooks). All verification functionality is grouped into a single, reusable service for better organization and maintainability.
+
+## Service Architecture
+
+### WebhookVerificationService
+
+The `WebhookVerificationService` class encapsulates all webhook verification logic:
+
+```typescript
+export class WebhookVerificationService {
+  private verifyToken: string;
+  private appSecret: string;
+
+  constructor(verifyToken: string, appSecret: string) {
+    this.verifyToken = verifyToken;
+    this.appSecret = appSecret;
+  }
+
+  // Main validation methods
+  validateVerificationRequest(params: WebhookVerificationParams): WebhookVerificationResult
+  validateMessagePayload(contentType, rawBody, signature, body): Promise<WebhookMessageValidation>
+}
+```
 
 ## Implementation Details
 
@@ -21,21 +43,24 @@ According to Meta documentation, verification requests include these query param
 #### Implementation Flow
 
 ```typescript
-// 1. Extract parameters from query string
-const mode = c.req.query('hub.mode');
-const token = c.req.query('hub.verify_token');
-const challenge = c.req.query('hub.challenge');
+// 1. Create service instance
+const webhookService = WebhookVerificationService.createFromEnv(c.env);
 
-// 2. Validate all required parameters are present
-if (!verifyToken || !mode || !token || !challenge) {
-  return c.text('Forbidden', 403);
+// 2. Validate verification request
+const verificationResult = webhookService.validateVerificationRequest({
+  mode: c.req.query('hub.mode') || null,
+  token: c.req.query('hub.verify_token') || null,
+  challenge: c.req.query('hub.challenge') || null,
+  verifyToken: c.env.WHATSAPP_VERIFY_TOKEN
+});
+
+// 3. Return appropriate response
+if (!verificationResult.isValid) {
+  const statusCode = verificationResult.error === 'Missing required parameters' ? 400 : 403;
+  return c.text(verificationResult.error || 'Forbidden', statusCode);
 }
 
-// 3. Verify hub.verify_token matches App Dashboard setting
-if (mode === 'subscribe' && token === verifyToken) {
-  // 4. Respond with hub.challenge value as required by Meta
-  return c.text(challenge);
-}
+return c.text(verificationResult.challenge!);
 ```
 
 ### 2. Event Notifications (POST `/api/webhook`)
@@ -47,51 +72,91 @@ Event notifications include a signed payload with the following headers:
 
 #### Payload Validation
 
-According to Meta documentation, all event notification payloads are signed with SHA256. The implementation validates this signature:
-
 ```typescript
-// 1. Validate content type
-const contentType = c.req.header('content-type');
-if (!contentType?.includes('application/json')) {
-  return c.text('Bad Request', 400);
-}
+// 1. Create service instance
+const webhookService = WebhookVerificationService.createFromEnv(c.env);
 
-// 2. Get raw body for signature validation
+// 2. Get raw body and parse JSON
 const rawBody = await c.req.text();
-
-// 3. Validate payload signature
-const signature = c.req.header('x-hub-signature-256');
-if (signature && !await validatePayloadSignature(rawBody, signature, appSecret)) {
-  return c.text('Unauthorized', 401);
-}
-
-// 4. Parse and validate message structure
 const body = JSON.parse(rawBody) as WhatsAppMessage;
+
+// 3. Validate message payload
+const validationResult = await webhookService.validateMessagePayload(
+  c.req.header('content-type') || null,
+  rawBody,
+  c.req.header('x-hub-signature-256') || null,
+  body
+);
+
+// 4. Handle validation result
+if (!validationResult.isValid) {
+  const statusCode = validationResult.error === 'Invalid content type' ||
+                     validationResult.error === 'Invalid body' ? 400 : 401;
+  return c.text(validationResult.error || 'Bad Request', statusCode);
+}
 ```
 
 ### 3. SHA256 Signature Validation
 
-The implementation follows Meta's signature validation process:
+The service implements Meta's signature validation process:
 
 1. **Extract Signature**: Remove `sha256=` prefix from header
 2. **Generate Expected Signature**: Use HMAC-SHA256 with app secret
 3. **Compare Signatures**: Constant-time comparison to prevent timing attacks
 
 ```typescript
-export async function validatePayloadSignature(
-  payload: string,
-  signature: string,
-  appSecret: string
-): Promise<boolean> {
+private async validatePayloadSignature(payload: string, signature: string): Promise<boolean> {
   // Extract signature value (remove 'sha256=' prefix)
   const signatureValue = signature.replace('sha256=', '');
 
   // Generate expected signature using HMAC-SHA256
-  const expectedSignature = await generateSHA256Signature(payload, appSecret);
+  const expectedSignature = await this.generateSHA256Signature(payload);
 
   // Constant-time comparison for security
-  return constantTimeCompare(signatureValue, expectedSignature);
+  return this.constantTimeCompare(signatureValue, expectedSignature);
 }
+```
+
+## Service Methods
+
+### validateVerificationRequest()
+
+Validates webhook verification parameters:
+
+```typescript
+validateVerificationRequest(params: WebhookVerificationParams): WebhookVerificationResult
+```
+
+**Validation Rules:**
+- All parameters must be present
+- `mode` must be `subscribe`
+- `token` must match `verifyToken`
+- `verifyToken` must be configured
+
+### validateMessagePayload()
+
+Validates WhatsApp message payload:
+
+```typescript
+async validateMessagePayload(
+  contentType: string | null,
+  rawBody: string,
+  signature: string | null,
+  body: any
+): Promise<WebhookMessageValidation>
+```
+
+**Validation Steps:**
+1. Content-Type validation
+2. Signature validation (if app secret available)
+3. Message structure validation
+
+### createFromEnv()
+
+Factory method to create service from environment variables:
+
+```typescript
+static createFromEnv(env: { WHATSAPP_VERIFY_TOKEN: string; META_APP_SECRET: string }): WebhookVerificationService
 ```
 
 ## Security Features
@@ -187,20 +252,44 @@ curl -i -X POST \
 
 ```typescript
 // Verification failures
-if (!verifyToken || !mode || !token || !challenge) {
-  return c.text('Forbidden', 403);
+if (!verificationResult.isValid) {
+  const statusCode = verificationResult.error === 'Missing required parameters' ? 400 : 403;
+  return c.text(verificationResult.error || 'Forbidden', statusCode);
 }
 
-// Signature validation failures
-if (signature && !await validatePayloadSignature(rawBody, signature, appSecret)) {
-  return c.text('Unauthorized', 401);
-}
-
-// Message structure validation
-if (body.object !== 'whatsapp_business_account') {
-  return c.text('Not a WhatsApp message', 400);
+// Message validation failures
+if (!validationResult.isValid) {
+  const statusCode = validationResult.error === 'Invalid content type' ||
+                     validationResult.error === 'Invalid body' ? 400 : 401;
+  return c.text(validationResult.error || 'Bad Request', statusCode);
 }
 ```
+
+## Benefits of Service-Based Approach
+
+### 1. Code Organization
+
+- **Single Responsibility**: All webhook verification logic in one place
+- **Reusability**: Service can be used across different endpoints
+- **Maintainability**: Easier to update and test verification logic
+
+### 2. Type Safety
+
+- **Interface Definitions**: Clear contracts for validation parameters and results
+- **Type Checking**: Compile-time validation of data structures
+- **Error Handling**: Structured error responses with proper typing
+
+### 3. Testing
+
+- **Unit Testing**: Easy to test individual validation methods
+- **Mocking**: Simple to mock service for integration tests
+- **Isolation**: Verification logic isolated from route handlers
+
+### 4. Configuration
+
+- **Environment Integration**: Factory method for easy environment setup
+- **Dependency Injection**: Service can be injected with different configurations
+- **Flexibility**: Easy to extend with additional validation rules
 
 ## Best Practices
 
@@ -242,6 +331,7 @@ This implementation follows all Meta requirements:
 ✅ **Error Handling**: Returns appropriate HTTP status codes
 ✅ **Security**: Uses constant-time comparison and secure cryptographic methods
 ✅ **Logging**: Comprehensive logging for security monitoring
+✅ **Service Architecture**: Clean, maintainable, and testable code structure
 
 ## Troubleshooting
 
@@ -281,7 +371,7 @@ This implementation follows all Meta requirements:
 
 ## Conclusion
 
-This implementation provides a secure, Meta-compliant webhook verification system that follows all official guidelines and security best practices. The combination of parameter validation, signature verification, and comprehensive error handling ensures that only legitimate WhatsApp requests are processed.
+This service-based implementation provides a secure, Meta-compliant webhook verification system that follows all official guidelines and security best practices. The `WebhookVerificationService` encapsulates all verification logic in a clean, maintainable, and testable structure.
 
 For additional security, consider implementing:
 - Rate limiting
