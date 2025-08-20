@@ -51,6 +51,10 @@ export class WhatsAppService {
     }
   }
 
+  /**
+   * Send typing indicator using the correct WhatsApp Cloud API format
+   * According to: https://developers.facebook.com/docs/whatsapp/cloud-api/typing-indicators/
+   */
   async sendTypingIndicator(
     to: string,
     isTyping: boolean = true
@@ -60,6 +64,9 @@ export class WhatsAppService {
     }
 
     try {
+      // Format phone number (remove + if present)
+      const formattedPhone = this.formatPhoneNumber(to);
+
       const response = await fetch(`${this.baseUrl}/messages`, {
         method: 'POST',
         headers: {
@@ -69,17 +76,28 @@ export class WhatsAppService {
         body: JSON.stringify({
           messaging_product: 'whatsapp',
           recipient_type: 'individual',
-          to: to,
-          type: 'reaction',
-          reaction: {
-            messaging_product: 'whatsapp',
-            recipient_id: to,
-            type: isTyping ? 'typing' : 'read',
-          },
+          to: formattedPhone,
+          ...(isTyping && {
+            type: 'reaction',
+            reaction: {
+              messaging_product: 'whatsapp',
+              type: 'typing',
+            },
+          }),
         }),
       });
 
-      return response.ok;
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(
+          'Typing indicator API error:',
+          response.status,
+          errorText
+        );
+        return false;
+      }
+
+      return true;
     } catch (error) {
       console.error('Error sending typing indicator:', error);
       return false;
