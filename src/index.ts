@@ -1,4 +1,3 @@
-import type { User } from 'better-auth/types';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
@@ -7,7 +6,6 @@ import { ChatService } from './kv/chat-service';
 import { ChatSessionService } from './kv/chat-session-service';
 import { auth } from './lib/better-auth';
 import { AIService } from './services/ai_service';
-import { DatabaseService } from './services/database_service';
 import { isAuthorizedPhoneNumber } from './services/utils';
 import { WhatsAppService } from './services/whatsapp_service';
 import type { WhatsAppMessage } from './types';
@@ -140,7 +138,7 @@ app.get('/api/auth/verify', async (c) => {
   }
 
   const authClient = auth(c.env);
-  const data = await authClient.api.verifyPhoneNumber({
+  await authClient.api.verifyPhoneNumber({
     body: {
       phoneNumber: phoneNumber,
       code: code,
@@ -149,7 +147,7 @@ app.get('/api/auth/verify', async (c) => {
     headers: c.req.header(),
   });
 
-  return c.text('OK');
+  return c.text('Welcome to WhatsApp AI');
 });
 
 // Function to send unauthorized message to users
