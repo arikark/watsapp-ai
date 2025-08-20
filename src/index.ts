@@ -6,7 +6,10 @@ import { ChatService } from './kv/chat-service';
 import { ChatSessionService } from './kv/chat-session-service';
 import { auth } from './lib/better-auth';
 import { AIService } from './services/ai_service';
-import { isAuthorizedPhoneNumber } from './services/utils';
+import {
+  isAuthorizedPhoneNumber,
+  validatePayloadSignature,
+} from './services/utils';
 import { WhatsAppService } from './services/whatsapp_service';
 import type { WhatsAppMessage } from './types';
 
@@ -43,19 +46,27 @@ app.get('/admin', (_c) => {
   });
 });
 
-// WhatsApp webhook verification
+// WhatsApp webhook verification - used
 app.get('/api/webhook', (c) => {
   const mode = c.req.query('hub.mode');
   const token = c.req.query('hub.verify_token');
   const challenge = c.req.query('hub.challenge');
 
-  const verifyToken = c.env.WHATSAPP_VERIFY_TOKEN || 'your_verify_token';
+  const verifyToken = c.env.WHATSAPP_VERIFY_TOKEN;
 
+  // Validate verification request according to Meta documentation
+  if (!verifyToken || !mode || !token || !challenge) {
+    console.log('Webhook verification failed: Missing required parameters');
+    return c.text('Forbidden', 403);
+  }
+
+  // Verify that hub.verify_token matches the string set in App Dashboard
   if (mode === 'subscribe' && token === verifyToken) {
     console.log('Webhook verified successfully');
-    return c.text(challenge || '');
+    // Respond with the hub.challenge value as required by Meta
+    return c.text(challenge);
   } else {
-    console.log('Webhook verification failed');
+    console.log('Webhook verification failed: Invalid mode or token');
     return c.text('Forbidden', 403);
   }
 });
@@ -65,11 +76,42 @@ app.post('/api/webhook', async (c) => {
   const authClient = auth(c.env);
 
   try {
-    const body = (await c.req.json()) as WhatsAppMessage;
+    // Validate content type
+    const contentType = c.req.header('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.log('Webhook POST failed: Invalid content type', contentType);
+      return c.text('Bad Request', 400);
+    }
+
+    // Get the raw body for signature validation
+    const rawBody = await c.req.text();
+
+    // Validate payload signature if app secret is available
+    const appSecret = c.env.META_APP_SECRET; // Using META_APP_SECRET for signature validation
+    if (appSecret) {
+      const signature = c.req.header('x-hub-signature-256');
+      if (
+        signature &&
+        !(await validatePayloadSignature(rawBody, signature, appSecret))
+      ) {
+        console.log('Webhook POST failed: Invalid signature');
+        return c.text('Unauthorized', 401);
+      }
+    }
+
+    // Parse the JSON body
+    const body = JSON.parse(rawBody) as WhatsAppMessage;
 
     // Verify this is a WhatsApp message
     if (body.object !== 'whatsapp_business_account') {
+      console.log('Webhook POST failed: Not a WhatsApp message', body.object);
       return c.text('Not a WhatsApp message', 400);
+    }
+
+    // Validate required fields according to Meta documentation
+    if (!body.entry || !Array.isArray(body.entry) || body.entry.length === 0) {
+      console.log('Webhook POST failed: Invalid entry structure');
+      return c.text('Invalid webhook structure', 400);
     }
 
     // Process each entry
