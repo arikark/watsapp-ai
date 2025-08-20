@@ -1,6 +1,6 @@
 import type { BetterAuthOptions } from 'better-auth';
 import { phoneNumber } from 'better-auth/plugins/phone-number';
-import { ChatSessionService } from '../../kv/chat-session-service';
+import { ChatSessionService } from '../../services/chat-session-service';
 import { WhatsAppService } from '../../services/whatsapp_service';
 
 /**

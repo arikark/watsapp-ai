@@ -1,4 +1,4 @@
-import { ChatService } from '../kv/chat-service';
+import { ChatService } from '../services/chat-service';
 
 // Example usage of ChatService with chunked storage
 export async function chatServiceExample(env: Env) {

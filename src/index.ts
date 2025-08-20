@@ -2,10 +2,10 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { renderAdminDashboard } from './admin_dashboard';
-import { ChatService } from './kv/chat-service';
-import { ChatSessionService } from './kv/chat-session-service';
 import { auth } from './lib/better-auth';
 import { AIService } from './services/ai_service';
+import { ChatService } from './services/chat-service';
+import { ChatSessionService } from './services/chat-session-service';
 import { isAuthorizedPhoneNumber } from './services/utils';
 import { WebhookVerificationService } from './services/webhook_verification_service';
 import { WhatsAppService } from './services/whatsapp_service';
@@ -27,10 +27,12 @@ app.use('*', cors());
 
 // Auth middleware for all API routes except webhook
 app.on(['GET', 'POST'], '/api/**', async (c) => {
-  // Skip auth for webhook endpoints
-  // if (c.req.path === '/api/webhook') {
-  //   return next();
-  // }
+  // Skip auth for webhook endpoints - they need to be publicly accessible
+  if (c.req.path === '/api/webhook') {
+    return; // Continue without authentication for webhooks
+  }
+
+  // Apply authentication for all other API routes
   return auth(c.env).handler(c.req.raw);
 });
 // Health check endpoint
@@ -111,8 +113,7 @@ app.post('/api/webhook', async (c) => {
                   console.log(
                     `Rejected message from unauthorized number: ${message.from}`
                   );
-
-                  continue; // Skip processing this message
+                  continue;
                 }
 
                 // Session Management
@@ -138,6 +139,8 @@ app.post('/api/webhook', async (c) => {
                 );
 
                 return c.text('OK');
+              } else {
+                console.log(`Rejected message of type ${message.type}`);
               }
             }
           }
