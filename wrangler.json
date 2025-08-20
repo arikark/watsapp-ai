@@ -7,6 +7,16 @@
   "ai": {
     "binding": "AI"
   },
+  "kv_namespaces": [
+    {
+      "binding": "watsapp_ai_session",
+      "id": "ac22fc2fba3344e9af59e38257469cdd"
+    },
+    {
+      "binding": "watsapp_ai_chats",
+      "id": "ec4d23cd91bf415ea1c23cc82d5078d2"
+    }
+  ],
   "observability": {
     "enabled": true
   }

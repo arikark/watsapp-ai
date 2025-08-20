@@ -1,5 +1,6 @@
-import { magicLink } from 'better-auth/plugins';
+import type { BetterAuthOptions } from 'better-auth';
 import { phoneNumber } from 'better-auth/plugins/phone-number';
+import { ChatSessionService } from '../../kv/chat-session-service';
 import { WhatsAppService } from '../../services/whatsapp_service';
 
 /**
@@ -7,7 +8,10 @@ import { WhatsAppService } from '../../services/whatsapp_service';
  *
  * Docs: https://www.better-auth.com/docs/reference/options
  */
+
 export const getBetterAuthOptions = (env: Env) => {
+  const kv = env.watsapp_ai_session;
+
   return {
     /**
      * The name of the application.
@@ -20,31 +24,22 @@ export const getBetterAuthOptions = (env: Env) => {
      */
     basePath: '/api',
     plugins: [
-      magicLink({
-        sendMagicLink: async ({ email, url }, _request) => {
-          const phoneNumber = email.split('@')[0];
-          console.log(phoneNumber);
-          const whatsappService = new WhatsAppService(env);
-          const response = await whatsappService.sendMessage(
-            phoneNumber,
-            `Your magic link is ${url}`
-          );
-          console.log(response);
-          // send email to user
-        },
-      }),
       phoneNumber({
+        callbackOnVerification: async ({ phoneNumber, user }, _request) => {
+          const chatSessionService = new ChatSessionService(
+            env.watsapp_ai_session
+          );
+          await chatSessionService.putWhatsAppUserSession(phoneNumber, user);
+        },
         sendOTP: async ({ phoneNumber, code }, request) => {
           console.log(request);
           console.log('Sending OTP to', phoneNumber, 'with code', code);
           // Send OTP to user via whatsapp
           const whatsappService = new WhatsAppService(env);
-          const response = await whatsappService.sendMessage(
-            phoneNumber,
-            `Your OTP is ${code}`
-          );
-          console.log(response);
-          // whatsappService.sendOTP(phoneNumber, code);
+          const baseUrl = env.BETTER_AUTH_URL;
+          const url = `${baseUrl}/api/auth/verify?phoneNumber=${phoneNumber}&code=${code}`;
+          console.log('sending url for sign in', url);
+          await whatsappService.sendMessage(phoneNumber, url);
         },
         signUpOnVerification: {
           getTempEmail: (phoneNumber) => {
@@ -57,7 +52,32 @@ export const getBetterAuthOptions = (env: Env) => {
         },
       }),
     ],
-
-    // .... More options
-  };
+    session: {
+      additionalFields: {
+        phoneNumber: {
+          type: 'string',
+          required: true,
+        },
+      },
+    },
+    secondaryStorage: {
+      get: async (key) => {
+        const value = await kv.get(key);
+        return value ? value : null;
+      },
+      set: async (key, value, ttl) => {
+        console.log('setting', key, value, ttl);
+        if (ttl) {
+          // Convert relative TTL to absolute expiration timestamp
+          const expiration = Math.floor(Date.now() / 1000) + ttl;
+          await kv.put(key, value, { expiration });
+        } else {
+          await kv.put(key, value);
+        }
+      },
+      delete: async (key) => {
+        await kv.delete(key);
+      },
+    },
+  } satisfies BetterAuthOptions;
 };

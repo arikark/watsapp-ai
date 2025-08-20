@@ -1,7 +1,10 @@
+import type { User } from 'better-auth/types';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { renderAdminDashboard } from './admin_dashboard';
+import { ChatService } from './kv/chat-service';
+import { ChatSessionService } from './kv/chat-session-service';
 import { auth } from './lib/better-auth';
 import { AIService } from './services/ai_service';
 import { DatabaseService } from './services/database_service';
@@ -77,7 +80,6 @@ app.post('/api/webhook', async (c) => {
         if (change.field === 'messages') {
           const value = change.value;
 
-          // Process messages
           if (value.messages && value.messages.length > 0) {
             for (const message of value.messages) {
               if (message.type === 'text') {
@@ -87,38 +89,23 @@ app.post('/api/webhook', async (c) => {
                     `Rejected message from unauthorized number: ${message.from}`
                   );
 
-                  // Send a message to unauthorized users
-                  await sendUnauthorizedMessage(
-                    c.env,
-                    message.from,
-                    message.id
-                  );
                   continue; // Skip processing this message
                 }
 
-                // @ts-ignore
-                // const { data } = await authClient.api.sendPhoneNumberOTP({
-                //   request: c.env,
-                //   body: {
-                //     phoneNumber: message.from,
-                //   },
-                // });
+                // Session Management
+                const chatSessionService = new ChatSessionService(
+                  c.env.watsapp_ai_session
+                );
+                const existingSession =
+                  await chatSessionService.getWhatsAppUserSession(message.from);
 
-                // const session = await authClient.api.getSession({
-                //   headers: c.req.header(),
-                // });
-
-                const data = await authClient.api.signInMagicLink({
-                  body: {
-                    email: `${message.from}@whatsapp-ai.com`, // required
-                    name: message.from,
-                    callbackURL: '/',
-                    newUserCallbackURL: '/',
-                    errorCallbackURL: '/',
-                  },
-                  // This endpoint requires session cookies.
-                  headers: c.req.header(),
-                });
+                if (!existingSession) {
+                  await authClient.api.sendPhoneNumberOTP({
+                    body: {
+                      phoneNumber: message.from,
+                    },
+                  });
+                }
 
                 await processMessage(
                   c.env,
@@ -126,18 +113,43 @@ app.post('/api/webhook', async (c) => {
                   message.text.body,
                   message.id
                 );
+
+                return c.text('OK');
               }
             }
           }
         }
       }
     }
-
     return c.text('OK');
   } catch (error) {
     console.error('Error processing webhook:', error);
     return c.text('Internal Server Error', 500);
   }
+});
+
+app.get('/api/auth/verify', async (c) => {
+  const phoneNumber = c.req.query('phoneNumber');
+  const code = c.req.query('code');
+
+  console.log('phoneNumber', phoneNumber);
+  console.log('code', code);
+
+  if (!phoneNumber || !code) {
+    return c.text('Bad Request', 400);
+  }
+
+  const authClient = auth(c.env);
+  const data = await authClient.api.verifyPhoneNumber({
+    body: {
+      phoneNumber: phoneNumber,
+      code: code,
+      disableSession: true,
+    },
+    headers: c.req.header(),
+  });
+
+  return c.text('OK');
 });
 
 // Function to send unauthorized message to users
@@ -183,10 +195,10 @@ async function processMessage(
   try {
     const aiService = new AIService(env);
     const whatsappService = new WhatsAppService(env);
-    const dbService = new DatabaseService(env);
+    const chatService = new ChatService(env.watsapp_ai_chats);
 
     // Save the user message
-    await dbService.saveMessage(from, message, true);
+    await chatService.storeMessage(from, message, true);
 
     // Mark message as read
     await whatsappService.markMessageAsRead(messageId);
@@ -195,9 +207,9 @@ async function processMessage(
     await whatsappService.sendTypingIndicator(from, true);
 
     // Get conversation history for context
-    const conversationHistory = await dbService.getConversationHistoryForAI(
+    const conversationHistory = await chatService.getConversationHistoryForAI(
       from,
-      5
+      20
     );
 
     // Generate AI response
@@ -207,7 +219,7 @@ async function processMessage(
     );
 
     // Save the AI response
-    await dbService.saveMessage(from, aiResponse, false);
+    await chatService.storeMessage(from, aiResponse, false);
 
     // Send the response back to WhatsApp
     const formattedPhone = whatsappService.formatPhoneNumber(from);
