@@ -22,7 +22,8 @@ export const getBetterAuthOptions = (env: Env) => {
      * Base path for Better Auth.
      * @default "/api/auth"
      */
-    basePath: '/api',
+    basePath: '/api/auth',
+    trustedOrigins: ['http://localhost:5173'],
     plugins: [
       phoneNumber({
         callbackOnVerification: async ({ phoneNumber, user }, _request) => {

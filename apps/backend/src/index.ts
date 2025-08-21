@@ -23,18 +23,26 @@ function getValidationErrorStatusCode(error?: string): 400 | 401 {
 
 // Middleware
 app.use('*', logger());
-app.use('*', cors());
+app.use(
+  '*', // or replace with "*" to enable cors for all routes
+  cors({
+    origin: 'http://localhost:5173', // replace with your origin
+    allowHeaders: ['Content-Type', 'Authorization'],
+    allowMethods: ['POST', 'GET', 'OPTIONS'],
+    exposeHeaders: ['Content-Length'],
+    maxAge: 600,
+    credentials: true,
+  })
+);
 
-// Auth middleware for all API routes except webhook
-app.on(['GET', 'POST'], '/api/**', async (c) => {
-  // Skip auth for webhook endpoints - they need to be publicly accessible
-  if (c.req.path === '/api/webhook') {
-    return; // Continue without authentication for webhooks
-  }
-
-  // Apply authentication for all other API routes
+/**
+ * Mounts Better Auth on all GET and POST requests under `/api/*`.
+ * Ensure its `basePath` aligns with this route.
+ */
+app.on(['GET', 'POST'], '/api/*', (c) => {
   return auth(c.env).handler(c.req.raw);
 });
+
 // Health check endpoint
 app.get('/', (c) => {
   return c.json({

@@ -1,21 +1,26 @@
-import { getAuth } from '@clerk/react-router/ssr.server';
+import { SignedOut } from '@daveyplate/better-auth-ui';
+import { Outlet, useNavigate } from 'react-router';
+import { authClient } from '~/lib/auth-client';
 
-import { Outlet, redirect } from 'react-router';
-import type { Route } from '../+types/root';
-
-export async function loader(args: Route.LoaderArgs) {
-  //   const { isAuthenticated } = await getAuth(args);
-  //   if (isAuthenticated) {
-  //     return redirect('/introductions');
-}
-
-//   return null;
+// export async function loader(args: Route.LoaderArgs) {
+//   //   const { isAuthenticated } = await getAuth(args);
+//   //   if (isAuthenticated) {
+//   //     return redirect('/introductions');
 // }
 
+// //   return null;
+// // }
+
 export default function Layout() {
+  const navigate = useNavigate();
+  const { data: session } = authClient.useSession();
+  console.log('session', session);
+  if (session) {
+    // navigate('/home');
+  }
   return (
-    // <SignedOut>
-    <Outlet />
-    // </SignedOut>
+    <SignedOut>
+      <Outlet />
+    </SignedOut>
   );
 }

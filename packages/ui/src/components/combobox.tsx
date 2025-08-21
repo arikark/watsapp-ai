@@ -1,7 +1,10 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import { Button } from "@workspace/ui/components/button";
+import { debounce } from 'lodash-es';
+import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
+import * as React from 'react';
+import { cn } from '../lib/utils';
+import { Button } from './button';
 import {
   Command,
   CommandEmpty,
@@ -9,16 +12,9 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@workspace/ui/components/command";
-import { Label } from "@workspace/ui/components/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@workspace/ui/components/popover";
-import { cn } from "@workspace/ui/lib/utils";
-import { debounce } from "lodash-es";
-import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
+} from './command';
+import { Label } from './label';
+import { Popover, PopoverContent, PopoverTrigger } from './popover';
 
 interface ComboboxProps extends React.ComponentProps<typeof Popover> {
   placeholder: string;
@@ -41,20 +37,20 @@ export function Combobox({
   onSelect,
   triggerProps,
   label,
-  emptyMessage = "No results found.",
+  emptyMessage = 'No results found.',
   ...props
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
-  const [value, setValue] = React.useState("");
+  const [value, setValue] = React.useState('');
 
   // Create debounced search function outside of useCallback
   const debouncedSearch = React.useMemo(
     () => debounce((value: string) => onSearch(value), debounceTime),
-    [onSearch, debounceTime],
+    [onSearch, debounceTime]
   );
 
   const handleSelect = (currentValue: string) => {
-    const newValue = currentValue === value ? "" : currentValue;
+    const newValue = currentValue === value ? '' : currentValue;
     setValue(newValue);
     setOpen(false);
     onSelect?.(newValue);
@@ -69,11 +65,10 @@ export function Combobox({
             {...triggerProps}
             type="button"
             variant="outline"
-            role="combobox"
             aria-expanded={open}
             className={cn(
-              "w-full min-w-[200px] justify-between overflow-hidden",
-              triggerProps?.className,
+              'w-full min-w-[200px] justify-between overflow-hidden',
+              triggerProps?.className
             )}
           >
             {value
@@ -106,8 +101,8 @@ export function Combobox({
                 >
                   <Check
                     className={cn(
-                      "mr-2 h-4 w-4",
-                      value === option.value ? "opacity-100" : "opacity-0",
+                      'mr-2 h-4 w-4',
+                      value === option.value ? 'opacity-100' : 'opacity-0'
                     )}
                   />
                   <span>{option.label}</span>

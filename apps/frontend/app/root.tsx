@@ -1,8 +1,8 @@
-import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
-import { Toaster } from "@workspace/ui/components/sonner";
+import { Toaster } from '@workspace/ui/components';
+import { Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router';
 
-import "@workspace/ui/globals.css";
-import { QueryProvider } from "./lib/query-provider";
+import '@workspace/ui/globals.css';
+import { QueryProvider } from './lib/query-provider';
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (

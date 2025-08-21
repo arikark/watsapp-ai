@@ -4,6 +4,7 @@ export default [
   layout('layouts/master-layout.tsx', [
     layout('layouts/unauthenticated-layout.tsx', [
       route('/', 'routes/unauthenticated/landing.tsx'),
+      route('/auth/:pathname', 'routes/unauthenticated/auth.tsx'),
     ]),
     layout('layouts/authenticated-layout.tsx', [
       route('/home', 'routes/authenticated/home.tsx'),
