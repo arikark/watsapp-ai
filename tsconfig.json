@@ -1,17 +1,7 @@
 {
+  "extends": "@workspace/typescript-config/base.json",
   "compilerOptions": {
-    "target": "esnext",
-    "lib": ["esnext"],
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "types": ["./worker-configuration.d.ts", "@cloudflare/workers-types"],
-    "noEmit": true,
-    "isolatedModules": true,
-    "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true
-  },
-  "include": ["src"]
+    "noEmit": true
+  }
 }
+
