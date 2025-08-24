@@ -1,0 +1,9 @@
+# Environment variables
+.env
+
+# Build artifacts
+dist/
+node_modules/
+
+# Logs
+*.log

@@ -1,0 +1,44 @@
+{
+  "name": "@workspace/db",
+  "version": "0.0.1",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "postinstall": "pnpm run generate",
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rimraf dist",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "pull": "drizzle-kit pull",
+    "generate": "drizzle-kit generate && tsup",
+    "push": "drizzle-kit push",
+    "migrate": "drizzle-kit migrate",
+    "studio": "drizzle-kit studio",
+    "seed": "tsx src/seed.ts"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.0.0",
+    "dotenv": "^16.6.1",
+    "drizzle-orm": "^0.42.0",
+    "pg": "^8.14.1",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@workspace/typescript-config": "workspace:*",
+    "@types/node": "^20.10.5",
+    "@types/pg": "^8.11.13",
+    "drizzle-kit": "^0.31.0",
+    "tsup": "^8.4.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.3.3"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "packageManager": "pnpm@10.4.1"
+}

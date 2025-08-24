@@ -1,7 +1,7 @@
 import { count, desc, eq, lt } from 'drizzle-orm';
-import { createDb } from '../db/db';
-import { chat_messages } from '../db/schema';
-import type { ChatMessage, NewChatMessage } from '../db/types';
+import { createDb } from '../db-delete/db';
+import { chat_messages } from '../db-delete/schema';
+import type { ChatMessage, NewChatMessage } from '../db-delete/types';
 
 export class DatabaseService {
   private db: ReturnType<typeof createDb>;
