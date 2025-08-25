@@ -1,9 +1,12 @@
 import { Button, Input } from '@workspace/ui/components';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { authClient } from '~/clients/authClient';
+import { getAuthClient } from '~/auth/auth-client';
 
 export default function AuthPage() {
+  const authClient = getAuthClient({
+    baseURL: import.meta.env.BETTER_AUTH_URL,
+  });
   const { useSession } = authClient;
   const [otp, setOtp] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');

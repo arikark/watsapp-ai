@@ -78,7 +78,7 @@ export const createAuth = ({
       get: async (key) => {
         console.log('getting', key);
         const value = await kv.get(key);
-        return value ? value : null;
+        return value;
       },
       set: async (key, value, ttl) => {
         console.log('setting', key, value, ttl);

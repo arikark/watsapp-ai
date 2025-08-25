@@ -6,6 +6,6 @@
       "@workspace/db/*": ["./src/*"]
     }
   },
-  "include": ["."],
+  "include": [".", "../auth/tsup.config copy.ts"],
   "exclude": ["node_modules", "dist"]
 }

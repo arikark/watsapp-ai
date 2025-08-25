@@ -1,19 +1,7 @@
-import {
-  index,
-  layout,
-  type RouteConfig,
-  route,
-} from '@react-router/dev/routes';
+import type { RouteConfig } from '@react-router/dev/routes';
+import { index, route } from '@react-router/dev/routes';
 
 export default [
-  layout('layouts/master-layout.tsx', [
-    layout('layouts/authenticated-layout.tsx', [
-      index('routes/authenticated/home.tsx'),
-    ]),
-    layout('layouts/unauthenticated-layout.tsx', [
-      index('routes/home.tsx'),
-      // index('routes/unauthenticated/landing.tsx'),
-      // route('auth/:pathname', 'routes/unauthenticated/auth.tsx'),
-    ]),
-  ]),
+  index('routes/home.tsx'),
+  route('api/auth/*', 'routes/auth.ts'),
 ] satisfies RouteConfig;

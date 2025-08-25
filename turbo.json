@@ -51,6 +51,10 @@
       "dependsOn": ["^db:generate"],
       "cache": false,
       "outputs": []
+    },
+    "auth:build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
     }
   }
 }
