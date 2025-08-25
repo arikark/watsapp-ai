@@ -74,7 +74,6 @@ export const createAuth = ({
     ...getBaseOptions(db),
     ...options,
     secret: authSecret,
-    trustedOrigins: ['http://localhost:8787', 'http://localhost:5173'],
     secondaryStorage: {
       get: async (key) => {
         console.log('getting', key);
