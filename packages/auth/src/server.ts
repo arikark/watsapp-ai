@@ -76,6 +76,7 @@ export const createAuth = ({
     trustedOrigins: [webUrl].map((url) => new URL(url).origin),
     secondaryStorage: {
       get: async (key) => {
+        console.log('getting', key);
         const value = await kv.get(key);
         return value ? value : null;
       },
