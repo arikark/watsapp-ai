@@ -8,6 +8,13 @@
       "when": 1756106265354,
       "tag": "0000_brown_elektra",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1756112291213,
+      "tag": "0001_blue_karen_page",
+      "breakpoints": true
     }
   ]
 }

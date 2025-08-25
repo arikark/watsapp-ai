@@ -1,10 +1,6 @@
+import type { KVNamespace } from '@cloudflare/workers-types';
 import type { DatabaseInstance } from '@workspace/db';
-import {
-  type BetterAuthOptions,
-  betterAuth,
-  type SecondaryStorage,
-  set,
-} from 'better-auth';
+import { type BetterAuthOptions, betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { phoneNumber } from 'better-auth/plugins/phone-number';
 
@@ -64,18 +60,38 @@ export const createAuth = ({
   db,
   authSecret,
   secondaryStorage,
+  kv,
   ...options
 }: {
   webUrl: string;
   db: DatabaseInstance;
   authSecret: string;
-  secondaryStorage: SecondaryStorage;
+  // secondaryStorage: SecondaryStorage;
+  kv: KVNamespace<string>;
 } & BetterAuthOptions) => {
   return betterAuth({
     ...getBaseOptions(db),
     ...options,
     secret: authSecret,
     trustedOrigins: [webUrl].map((url) => new URL(url).origin),
-    secondaryStorage,
+    secondaryStorage: {
+      get: async (key) => {
+        const value = await kv.get(key);
+        return value ? value : null;
+      },
+      set: async (key, value, ttl) => {
+        console.log('setting', key, value, ttl);
+        if (ttl) {
+          // Convert relative TTL to absolute expiration timestamp
+          const expiration = Math.floor(Date.now() / 1000) + ttl;
+          await kv.put(key, value, { expiration });
+        } else {
+          await kv.put(key, value);
+        }
+      },
+      delete: async (key) => {
+        await kv.delete(key);
+      },
+    },
   });
 };

@@ -1,3 +1,4 @@
+import type { KVNamespace } from '@cloudflare/workers-types';
 import { createAuth } from '@workspace/auth/server';
 import { createDb } from '@workspace/db';
 import { phoneNumber } from 'better-auth/plugins/phone-number';
@@ -30,25 +31,6 @@ export default {
       webUrl: 'http://localhost:5173',
       db,
       authSecret: process.env.BETTER_AUTH_SECRET,
-      secondaryStorage: {
-        get: async (key) => {
-          const value = await env.watsapp_ai_session.get(key);
-          return value ? value : null;
-        },
-        set: async (key, value, ttl) => {
-          console.log('setting', key, value, ttl);
-          if (ttl) {
-            // Convert relative TTL to absolute expiration timestamp
-            const expiration = Math.floor(Date.now() / 1000) + ttl;
-            await env.watsapp_ai_session.put(key, value, { expiration });
-          } else {
-            await env.watsapp_ai_session.put(key, value);
-          }
-        },
-        delete: async (key) => {
-          await env.watsapp_ai_session.delete(key);
-        },
-      },
       plugins: [
         phoneNumber({
           callbackOnVerification: async ({ phoneNumber, user }, _request) => {
@@ -78,6 +60,8 @@ export default {
           },
         }),
       ],
+      // Workers using different KV namespaces version than that imported from @cloudflare/workers-types
+      kv: env.watsapp_ai_session as KVNamespace<string>,
     });
 
     // Middleware

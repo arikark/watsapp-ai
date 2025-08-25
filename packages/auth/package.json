@@ -21,9 +21,10 @@
     "better-auth": "catalog:"
   },
   "devDependencies": {
-    "@workspace/typescript-config": "workspace:*",
+    "@cloudflare/workers-types": "catalog:",
     "@types/node": "catalog:",
-    "typescript": "catalog:",
-    "tsup": "catalog:"
+    "@workspace/typescript-config": "workspace:*",
+    "tsup": "catalog:",
+    "typescript": "catalog:"
   }
 }
