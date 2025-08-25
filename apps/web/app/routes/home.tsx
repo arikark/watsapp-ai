@@ -19,6 +19,8 @@ export function meta({}: Route.MetaArgs) {
 export async function loader({ context, request }: Route.LoaderArgs) {
   const auth = getAuth(context);
   const session = await auth.api.getSession({ headers: request.headers });
+  // const list = await context.cloudflare.env.BETTER_AUTH_SESSION.list();
+  // console.log('list on rr', list);
 
   return {
     baseURL: context.cloudflare.env.BETTER_AUTH_URL,

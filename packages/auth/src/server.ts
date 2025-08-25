@@ -60,24 +60,27 @@ export const createAuth = ({
   webUrl,
   db,
   authSecret,
-  secondaryStorage,
   kv,
   ...options
 }: {
   webUrl: string;
   db: DatabaseInstance;
   authSecret: string;
-  // secondaryStorage: SecondaryStorage;
   kv: KVNamespace<string>;
 } & BetterAuthOptions) => {
+  // const list = await kv.list();
+  // console.log('list on server', list);
   return betterAuth({
     ...getBaseOptions(db),
     ...options,
     secret: authSecret,
     secondaryStorage: {
       get: async (key) => {
-        console.log('getting', key);
+        console.log('getting session', key);
+        const list = await kv.list();
+        console.log('list', list);
         const value = await kv.get(key);
+        console.log('value', value);
         return value;
       },
       set: async (key, value, ttl) => {

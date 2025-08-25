@@ -17,6 +17,7 @@
   "kv_namespaces": [
     {
       "binding": "BETTER_AUTH_SESSION",
+      "experimental_remote": true,
       "id": "ac22fc2fba3344e9af59e38257469cdd"
     }
   ]
