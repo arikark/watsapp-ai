@@ -12,7 +12,8 @@
     "dev": "turbo dev",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "deploy": "turbo deploy"
+    "deploy": "turbo deploy",
+    "auth:schema:generate": "pnpm --filter @workspace/auth auth:schema:generate"
   },
   "devDependencies": {
     "@types/lodash-es": "^4.17.12",

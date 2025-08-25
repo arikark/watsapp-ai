@@ -1,3 +1,4 @@
+import { phoneNumberClient } from 'better-auth/client/plugins';
 import { createAuthClient as createBetterAuthClient } from 'better-auth/react';
 
 export interface AuthClientOptions {
@@ -14,5 +15,5 @@ export const createAuthClient = ({ apiBaseUrl }: AuthClientOptions) =>
      * Ensure that you are using the client-side version of the plugin,
      * e.g. `adminClient` instead of `admin`.
      */
-    // plugins: []
+    plugins: [phoneNumberClient()],
   });
