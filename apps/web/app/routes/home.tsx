@@ -1,3 +1,7 @@
+import { Input } from '@workspace/ui/components';
+import { Button } from 'node_modules/@workspace/ui/src/components/button';
+import { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { getAuth } from '~/auth/auth.server';
 import { getAuthClient } from '~/auth/auth-client';
 import type { Route } from './+types/home';
@@ -22,34 +26,50 @@ export async function loader({ context, request }: Route.LoaderArgs) {
   };
 }
 
-export default function Home({ loaderData }: Route.ComponentProps) {
-  const { signIn } = getAuthClient({ baseURL: loaderData.baseURL });
+export default function AuthPage() {
+  const authClient = getAuthClient({
+    baseURL: import.meta.env.BETTER_AUTH_URL,
+  });
+  const [otp, setOtp] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const navigate = useNavigate();
+  const onClickSendOtp = async () => {
+    console.log('phoneNumber', phoneNumber);
+    const { data, error } = await authClient.phoneNumber.sendOtp({
+      phoneNumber: phoneNumber,
+    });
+    console.log(data, error);
+  };
 
-  // const signInGitHub = async () => {
-  //   await signIn.social({
-  //     provider: 'github',
-  //   });
-  // };
+  const onClickVerifyOtp = async () => {
+    const { data, error } = await authClient.phoneNumber.verify({
+      phoneNumber: phoneNumber,
+      code: otp,
+    });
+    if (error) {
+      console.error(error);
+    } else {
+      navigate('/');
+    }
+  };
 
   return (
-    <div className="mx-auto max-w-sm p-4">
-      <h1 className="text-xl">
-        Better Auth example (hosted on Cloudflare Workers)
-      </h1>
-      {loaderData.user ? (
-        <div className="whitespace-pre-wrap">
-          {JSON.stringify(loaderData.user)}
-        </div>
-      ) : (
-        <div>
-          <button
-            onClick={() => signInGitHub()}
-            className="bg-slate-900 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50 text-white font-semibold h-12 px-6 rounded-lg w-full flex items-center justify-center sm:w-auto dark:bg-sky-500 dark:highlight-white/20 dark:hover:bg-sky-400"
-          >
-            Login with GitHubsss
-          </button>
-        </div>
-      )}
-    </div>
+    <main className="container flex grow flex-col items-center justify-center gap-3 self-center p-4 md:p-6">
+      <Button onClick={onClickSendOtp}>Send OTP</Button>
+      <Input
+        type="text"
+        placeholder="Phone Number"
+        value={phoneNumber}
+        onChange={(e) => setPhoneNumber(e.target.value)}
+      />
+
+      <Input
+        type="text"
+        placeholder="OTP"
+        value={otp}
+        onChange={(e) => setOtp(e.target.value)}
+      />
+      <Button onClick={onClickVerifyOtp}>Verify OTP</Button>
+    </main>
   );
 }
