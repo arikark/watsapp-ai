@@ -40,6 +40,7 @@ export default {
             await chatSessionService.putWhatsAppUserSession(phoneNumber, user);
           },
           sendOTP: async ({ phoneNumber, code }, request) => {
+            console.log('request');
             console.log(request);
             console.log('Sending OTP to', phoneNumber, 'with code', code);
             // Send OTP to user via whatsapp
@@ -62,6 +63,11 @@ export default {
       ],
       // Workers using different KV namespaces version than that imported from @cloudflare/workers-types
       kv: env.BETTER_AUTH_SESSION as KVNamespace<string>,
+      secondaryStorage: {
+        get: async () => {
+          return null;
+        },
+      },
     });
 
     // Middleware

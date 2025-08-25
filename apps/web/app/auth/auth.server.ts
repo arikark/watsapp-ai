@@ -1,22 +1,26 @@
+import { createAuth } from '@workspace/auth/server';
 import { createDb, schema } from '@workspace/db';
 import type { BetterAuthOptions } from 'better-auth';
-import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import type { AppLoadContext } from 'react-router';
 
-let authInstance: ReturnType<typeof betterAuth>;
+let authInstance: ReturnType<typeof createAuth>;
 
 export function createBetterAuth(
   database: BetterAuthOptions['database'],
   env: Env
-): ReturnType<typeof betterAuth> {
+): ReturnType<typeof createAuth> {
   if (!authInstance) {
-    authInstance = betterAuth({
-      database,
-      emailAndPassword: {
-        enabled: false,
+    authInstance = createAuth({
+      db: database,
+      authSecret: env.BETTER_AUTH_SECRET,
+      webUrl: env.BETTER_AUTH_URL,
+      secondaryStorage: {
+        get: async () => {
+          return null;
+        },
       },
-      secret: env.BETTER_AUTH_SECRET,
+      kv: env.BETTER_AUTH_SESSION,
     });
   }
 

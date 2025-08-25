@@ -10,7 +10,7 @@ import { WhatsAppService } from '../../services/whatsapp_service';
  */
 
 export const getBetterAuthOptions = (env: Env) => {
-  const kv = env.watsapp_ai_session;
+  const kv = env.BETTER_AUTH_SESSION;
 
   return {
     /**
@@ -23,12 +23,12 @@ export const getBetterAuthOptions = (env: Env) => {
      * @default "/api/auth"
      */
     basePath: '/api/auth',
-    trustedOrigins: ['http://localhost:5173'],
+    trustedOrigins: ['http://localhost:5173', 'http://localhost:8787'],
     plugins: [
       phoneNumber({
         callbackOnVerification: async ({ phoneNumber, user }, _request) => {
           const chatSessionService = new ChatSessionService(
-            env.watsapp_ai_session
+            env.BETTER_AUTH_SESSION
           );
           await chatSessionService.putWhatsAppUserSession(phoneNumber, user);
         },

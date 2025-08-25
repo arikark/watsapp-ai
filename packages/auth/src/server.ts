@@ -20,6 +20,7 @@ export const getBaseOptions = (db: DatabaseInstance) =>
     database: drizzleAdapter(db, {
       provider: 'pg',
     }),
+    trustedOrigins: ['http://localhost:8787', 'http://localhost:5173'],
     // Plugins to be added for type inference. They will be overridden in createAuth if passed as options.
     plugins: [phoneNumber()],
     session: {
@@ -73,7 +74,7 @@ export const createAuth = ({
     ...getBaseOptions(db),
     ...options,
     secret: authSecret,
-    trustedOrigins: [webUrl].map((url) => new URL(url).origin),
+    trustedOrigins: ['http://localhost:8787', 'http://localhost:5173'],
     secondaryStorage: {
       get: async (key) => {
         console.log('getting', key);
