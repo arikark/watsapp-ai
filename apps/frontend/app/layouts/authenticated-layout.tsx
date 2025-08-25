@@ -7,14 +7,19 @@ import { QueryProvider } from '~/lib/query-provider';
 import type { Route } from '../+types/root';
 
 export async function loader({ context, request }: Route.LoaderArgs) {
-  const kv = context.cloudflare.env.BETTER_AUTH_KV as KVNamespace<string>;
-  const authServer = getAuthServer(kv);
-  const { getSession } = authServer.api;
-  const session = await getSession({ headers: request.headers });
-  console.log(session);
-  if (!session) {
-    return redirect('/');
-  }
+  // const kv = context.cloudflare.env.BETTER_AUTH_SESSION as KVNamespace<string>;
+  // const authServer = getAuthServer({
+  //   databaseUrl: context.cloudflare.env.DATABASE_URL,
+  //   authSecret: context.cloudflare.env.BETTER_AUTH_SECRET,
+  //   webUrl: context.cloudflare.env.BETTER_AUTH_URL,
+  //   kv,
+  // });
+  // const { getSession } = authServer.api;
+  // const session = await getSession({ headers: request.headers });
+  // console.log(session);
+  // if (!session) {
+  //   return redirect('/');
+  // }
   // Use `getAuth()` to get the user's ID
 
   // Protect the route by checking if the user is signed in

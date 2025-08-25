@@ -1,6 +1,6 @@
 import { SignedOut } from '@daveyplate/better-auth-ui';
 import { Outlet, useNavigate } from 'react-router';
-import { authClient } from '~/lib/auth-client';
+import { authClient } from '~/clients/authClient';
 
 // export async function loader(args: Route.LoaderArgs) {
 //   //   const { isAuthenticated } = await getAuth(args);
@@ -13,11 +13,11 @@ import { authClient } from '~/lib/auth-client';
 
 export default function Layout() {
   const navigate = useNavigate();
-  const { data: session } = authClient.useSession();
-  console.log('session', session);
-  if (session) {
-    // navigate('/home');
-  }
+  // const { data: session } = authClient.useSession();
+  // console.log('session', session);
+  // if (session) {
+  //   // navigate('/home');
+  // }
   return (
     <SignedOut>
       <Outlet />

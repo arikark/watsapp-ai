@@ -14,28 +14,28 @@ import { WebhookVerificationService } from './services/webhook_verification_serv
 import { WhatsAppService } from './services/whatsapp_service';
 import type { WhatsAppMessage } from './types';
 
+/**
+ * Determines the appropriate HTTP status code for validation errors
+ */
+function getValidationErrorStatusCode(error?: string): 400 | 401 {
+  const badRequestErrors = ['Invalid content type', 'Invalid body'];
+  return badRequestErrors.includes(error || '') ? 400 : 401;
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
-    /**
-     * Determines the appropriate HTTP status code for validation errors
-     */
-    function getValidationErrorStatusCode(error?: string): 400 | 401 {
-      const badRequestErrors = ['Invalid content type', 'Invalid body'];
-      return badRequestErrors.includes(error || '') ? 400 : 401;
-    }
+    const db = createDb({ databaseUrl: env.DATABASE_URL });
 
     const app = new Hono<{ Bindings: Env }>();
-
-    const db = createDb();
     const auth = createAuth({
-      webUrl: 'http://localhost:5173',
+      webUrl: env.BETTER_AUTH_URL,
       db,
-      authSecret: process.env.BETTER_AUTH_SECRET,
+      authSecret: env.BETTER_AUTH_SECRET,
       plugins: [
         phoneNumber({
           callbackOnVerification: async ({ phoneNumber, user }, _request) => {
             const chatSessionService = new ChatSessionService(
-              env.watsapp_ai_session
+              env.BETTER_AUTH_SESSION
             );
             await chatSessionService.putWhatsAppUserSession(phoneNumber, user);
           },
@@ -61,7 +61,7 @@ export default {
         }),
       ],
       // Workers using different KV namespaces version than that imported from @cloudflare/workers-types
-      kv: env.watsapp_ai_session as KVNamespace<string>,
+      kv: env.BETTER_AUTH_SESSION as KVNamespace<string>,
     });
 
     // Middleware
@@ -69,7 +69,7 @@ export default {
     app.use(
       '*', // or replace with "*" to enable cors for all routes
       cors({
-        origin: 'http://localhost:5173', // replace with your origin
+        origin: env.WEB_APP_URL, // replace with your origin
         allowHeaders: ['Content-Type', 'Authorization'],
         allowMethods: ['POST', 'GET', 'OPTIONS'],
         exposeHeaders: ['Content-Length'],
@@ -77,14 +77,6 @@ export default {
         credentials: true,
       })
     );
-
-    /**
-     * Mounts Better Auth on all GET and POST requests under `/api/*`.
-     * Ensure its `basePath` aligns with this route.
-     */
-    app.on(['GET', 'POST'], '/api/*', (c) => {
-      return auth.handler(c.req.raw);
-    });
 
     // Health check endpoint
     app.get('/', (c) => {
@@ -172,7 +164,7 @@ export default {
 
                     // Session Management
                     const chatSessionService = new ChatSessionService(
-                      c.env.watsapp_ai_session
+                      c.env.BETTER_AUTH_SESSION
                     );
                     const existingSession =
                       await chatSessionService.getWhatsAppUserSession(
@@ -276,7 +268,7 @@ export default {
       try {
         const aiService = new AIService(env);
         const whatsappService = new WhatsAppService(env);
-        const chatService = new ChatService(env.watsapp_ai_chats);
+        const chatService = new ChatService(env.WHATSAPP_AI_CHATS);
 
         // Save the user message
         await chatService.storeMessage(from, message, true);
@@ -322,6 +314,14 @@ export default {
         );
       }
     }
+
+    /**
+     * Mounts Better Auth on all GET and POST requests under `/api/*`.
+     * This route should come after specific API routes like webhooks.
+     */
+    app.on(['GET', 'POST'], '/api/*', (c) => {
+      return auth.handler(c.req.raw);
+    });
 
     return app.fetch(request, env, ctx);
   },

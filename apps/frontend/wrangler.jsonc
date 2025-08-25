@@ -19,8 +19,8 @@
   },
   "kv_namespaces": [
     {
-      "binding": "BETTER_AUTH_KV",
-      "id": "019390fe52804119a33f13382333bed9"
+      "binding": "BETTER_AUTH_SESSION",
+      "id": "ac22fc2fba3344e9af59e38257469cdd"
     }
   ],
   /**

@@ -1,11 +1,10 @@
-import { AuthView } from '@daveyplate/better-auth-ui';
 import { Button, Input } from '@workspace/ui/components';
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { authClient } from '../../lib/auth-client';
+import { useNavigate } from 'react-router-dom';
+import { authClient } from '~/clients/authClient';
 
 export default function AuthPage() {
-  const { useSession, signIn } = authClient;
+  const { useSession } = authClient;
   const [otp, setOtp] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const { data: session } = useSession();

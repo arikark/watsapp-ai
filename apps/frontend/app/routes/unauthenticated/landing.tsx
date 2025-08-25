@@ -1,5 +1,5 @@
 import { redirect } from 'react-router';
-import { authClient } from '~/lib/auth-client';
+import { authClient } from '~/clients/authClient';
 
 export default function Landing() {
   const { data: session } = authClient.useSession();

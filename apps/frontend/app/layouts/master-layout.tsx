@@ -1,6 +1,5 @@
 import { AuthQueryProvider } from '@daveyplate/better-auth-tanstack';
 import { AuthUIProviderTanstack } from '@daveyplate/better-auth-ui/tanstack';
-import { createAuthClient } from 'better-auth/react';
 import {
   Link,
   Outlet,
@@ -8,8 +7,7 @@ import {
   ScrollRestoration,
   useNavigate,
 } from 'react-router-dom';
-import type { Route } from '../+types/root';
-import { authClient } from '../lib/auth-client';
+import { authClient } from '../clients/authClient';
 
 // export function ErrorBoundary({ error }: { error: Error }) {
 //   return (
@@ -37,9 +35,9 @@ import { authClient } from '../lib/auth-client';
 //   );
 // }
 
-export async function loader(args: Route.LoaderArgs) {
-  return {};
-}
+// export async function loader(args: Route.LoaderArgs) {
+//   return {};
+// }
 export default function MasterLayout() {
   // only initialize amplitude if not in dev mode
   // if (process.env.NODE_ENV !== 'development') {

@@ -2,18 +2,18 @@
   "compatibility_date": "2025-04-01",
   "compatibility_flags": ["nodejs_compat"],
   "main": "src/index.ts",
-  "name": "watsapp-ai",
+  "name": "watsapp-ai-backend",
   "upload_source_maps": true,
   "ai": {
     "binding": "AI"
   },
   "kv_namespaces": [
     {
-      "binding": "watsapp_ai_session",
+      "binding": "BETTER_AUTH_SESSION",
       "id": "ac22fc2fba3344e9af59e38257469cdd"
     },
     {
-      "binding": "watsapp_ai_chats",
+      "binding": "WHATSAPP_AI_CHATS",
       "id": "ec4d23cd91bf415ea1c23cc82d5078d2"
     }
   ],
