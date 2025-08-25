@@ -1,10 +1,20 @@
+import type { KVNamespace } from '@cloudflare/workers-types';
 import { SignedIn } from '@daveyplate/better-auth-ui';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Outlet, redirect } from 'react-router-dom';
+import { getAuthServer } from '~/clients/authClient';
 import { QueryProvider } from '~/lib/query-provider';
 import type { Route } from '../+types/root';
 
-export async function loader(args: Route.LoaderArgs) {
+export async function loader({ context, request }: Route.LoaderArgs) {
+  const kv = context.cloudflare.env.BETTER_AUTH_KV as KVNamespace<string>;
+  const authServer = getAuthServer(kv);
+  const { getSession } = authServer.api;
+  const session = await getSession({ headers: request.headers });
+  console.log(session);
+  if (!session) {
+    return redirect('/');
+  }
   // Use `getAuth()` to get the user's ID
 
   // Protect the route by checking if the user is signed in
