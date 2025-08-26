@@ -28,9 +28,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
 }
 
 export default function AuthPage() {
-  const authClient = getAuthClient({
-    baseURL: import.meta.env.BETTER_AUTH_URL,
-  });
+  const authClient = getAuthClient();
   const [otp, setOtp] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const navigate = useNavigate();

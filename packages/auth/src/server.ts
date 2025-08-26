@@ -1,4 +1,3 @@
-import { env } from 'node:process';
 import type { KVNamespace } from '@cloudflare/workers-types';
 import type { DatabaseInstance } from '@workspace/db';
 import {
@@ -22,7 +21,7 @@ const basePlugins = [phoneNumber()];
 /**
  * This function is abstracted for schema generations in cli-config.ts
  */
-export const getBaseOptions = (db: DatabaseInstance) => {
+export const getBaseOptions = (db: DatabaseInstance, serviceUrl: string) => {
   const session = {
     additionalFields: {
       phoneNumber: {
@@ -36,21 +35,21 @@ export const getBaseOptions = (db: DatabaseInstance) => {
     database: drizzleAdapter(db, {
       provider: 'pg',
     }),
-    trustedOrigins: ['http://localhost:8787', 'http://localhost:5173'],
+    trustedOrigins: [serviceUrl],
     // Plugins to be added for type inference. They will be overridden in createAuth if passed as options.
     plugins: basePlugins,
     session,
-    // secondaryStorage: {
-    //   get: async () => {
-    //     return null;
-    //   },
-    //   set: async () => {
-    //     return;
-    //   },
-    //   delete: async () => {
-    //     return;
-    //   },
-    // },
+    secondaryStorage: {
+      get: async () => {
+        return null;
+      },
+      set: async () => {
+        return;
+      },
+      delete: async () => {
+        return;
+      },
+    },
 
     /**
      * Only uncomment the line below if you are using plugins, so that
@@ -103,7 +102,7 @@ export const createAuth = ({
     });
   }
   const auth = betterAuth({
-    ...getBaseOptions(db),
+    ...getBaseOptions(db, webUrl),
     secret: authSecret,
     secondaryStorage: {
       get: async (key) => {

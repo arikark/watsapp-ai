@@ -1,14 +1,9 @@
 import { phoneNumberClient } from 'better-auth/client/plugins';
 import { createAuthClient } from 'better-auth/react';
 
-export function getAuthClient({
-  // the base url of your auth server
-  baseURL = 'http://localhost:8787',
-}: {
-  baseURL?: string;
-}) {
+export function getAuthClient() {
   const authClient = createAuthClient({
-    baseURL,
+    baseURL: import.meta.env.VITE_BETTER_AUTH_URL,
     plugins: [phoneNumberClient()],
   });
 
