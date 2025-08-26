@@ -7,7 +7,7 @@
       "dependsOn": ["^build", "^db:generate", "^types:build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": ["build/**", "dist/**", "public/**"],
-      "env": ["VITE_APP_API_URL", "DATABASE_URL"]
+      "env": ["VITE_APP_API_URL", "DATABASE_URL", "VITE_BETTER_AUTH_URL"]
     },
     "dev": {
       "dependsOn": ["^db:generate", "^types:build"],

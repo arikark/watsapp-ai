@@ -2,7 +2,6 @@
   "name": "backend",
   "description": "WhatsApp AI Chatbot using Cloudflare Workers, Hono, and Cloudflare Workers AI",
   "dependencies": {
-    "@hono/clerk-auth": "^2.0.0",
     "@workspace/auth": "workspace:*",
     "@workspace/db": "workspace:*",
     "ai": "^4.1.45",
@@ -24,7 +23,7 @@
   "scripts": {
     "cf-typegen": "wrangler types",
     "check": "tsc && wrangler deploy --dry-run",
-    "deploy": "pnpm run cf-typegen && wrangler secret bulk .dev.vars.production && wrangler deploy --minify",
+    "deploy": "pnpm run cf-typegen && wrangler secret bulk .dev.vars.production && wrangler deploy",
     "dev": "wrangler dev --x-remote-bindings",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
