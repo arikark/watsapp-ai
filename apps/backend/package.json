@@ -7,7 +7,7 @@
     "@workspace/db": "workspace:*",
     "ai": "^4.1.45",
     "better-auth": "catalog:",
-    "drizzle-orm": "^0.43.1",
+    "drizzle-orm": "catalog:",
     "hono": "^4.7.10",
     "qrcode": "^1.5.3",
     "workers-ai-provider": "^0.7.5",

@@ -1,13 +1,11 @@
-import { count, desc, eq, lt } from 'drizzle-orm';
-import { createDb } from '../db-delete/db';
-import { chat_messages } from '../db-delete/schema';
-import type { ChatMessage, NewChatMessage } from '../db-delete/types';
+import { chat_messages, createDb } from '@workspace/db';
+import { count, eq, lt } from 'drizzle-orm';
 
 export class DatabaseService {
   private db: ReturnType<typeof createDb>;
 
   constructor(env: Env) {
-    this.db = createDb(env.DATABASE_URL);
+    this.db = createDb({ databaseUrl: env.DATABASE_URL });
   }
 
   async saveMessage(
@@ -19,7 +17,7 @@ export class DatabaseService {
     const timestamp = new Date().toISOString();
 
     try {
-      const newMessage: NewChatMessage = {
+      const newMessage: typeof chat_messages.$inferInsert = {
         id,
         phone_number: phoneNumber,
         message,
@@ -38,13 +36,14 @@ export class DatabaseService {
   async getConversationHistory(
     phoneNumber: string,
     limit: number = 10
-  ): Promise<ChatMessage[]> {
+  ): Promise<(typeof chat_messages.$inferSelect)[]> {
     try {
       const messages = await this.db
         .select()
         .from(chat_messages)
         .where(eq(chat_messages.phone_number, phoneNumber))
-        .orderBy(desc(chat_messages.timestamp))
+        // .where(eq(1, 1))
+        // .orderBy(desc(chat_messages.created_at))
         .limit(limit);
 
       return messages;
