@@ -1,3 +1,4 @@
+import { env } from 'node:process';
 import type { KVNamespace } from '@cloudflare/workers-types';
 import type { DatabaseInstance } from '@workspace/db';
 import {
@@ -103,7 +104,6 @@ export const createAuth = ({
   }
   const auth = betterAuth({
     ...getBaseOptions(db),
-    ...options,
     secret: authSecret,
     secondaryStorage: {
       get: async (key) => {
@@ -128,6 +128,7 @@ export const createAuth = ({
         await kv.delete(key);
       },
     },
+    ...options,
   });
   return auth;
 };

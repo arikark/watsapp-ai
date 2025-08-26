@@ -1,10 +1,10 @@
 import { Input } from '@workspace/ui/components';
 import { Button } from 'node_modules/@workspace/ui/src/components/button';
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { redirect, useNavigate } from 'react-router';
 import { getAuth } from '~/auth/auth.server';
 import { getAuthClient } from '~/auth/auth-client';
-import type { Route } from './+types/home';
+import type { Route } from './+types/landing';
 
 export function meta() {
   return [
@@ -19,13 +19,12 @@ export function meta() {
 export async function loader({ context, request }: Route.LoaderArgs) {
   const auth = getAuth(context);
   const session = await auth.api.getSession({ headers: request.headers });
-  // const list = await context.cloudflare.env.BETTER_AUTH_SESSION.list();
-  // console.log('list on rr', list);
 
-  return {
-    baseURL: context.cloudflare.env.BETTER_AUTH_URL,
-    user: session?.user,
-  };
+  if (session) {
+    return redirect('/dashboard');
+  }
+
+  return null;
 }
 
 export default function AuthPage() {
@@ -51,7 +50,7 @@ export default function AuthPage() {
     if (error) {
       console.error(error);
     } else {
-      navigate('/');
+      navigate('/dashboard');
     }
   };
 

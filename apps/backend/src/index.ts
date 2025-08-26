@@ -1,6 +1,7 @@
 import type { KVNamespace } from '@cloudflare/workers-types';
 import { createAuth } from '@workspace/auth';
 import { createDb } from '@workspace/db';
+import { phoneNumber } from 'better-auth/plugins/phone-number';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
@@ -29,6 +30,35 @@ export default {
       webUrl: env.BETTER_AUTH_URL,
       // Has to use the type from @cloudflare/workers-types as wrangler uses a different version of the KVNamespace type
       kv: env.BETTER_AUTH_SESSION as KVNamespace<string>,
+      plugins: [
+        phoneNumber({
+          callbackOnVerification: async ({ phoneNumber, user }, _request) => {
+            const chatSessionService = new ChatSessionService(
+              env.WHATSAPP_AI_CHATS
+            );
+            await chatSessionService.putWhatsAppUserSession(phoneNumber, user);
+          },
+          sendOTP: async ({ phoneNumber, code }, request) => {
+            console.log(request);
+            console.log('Sending OTP to', phoneNumber, 'with code', code);
+            // Send OTP to user via whatsapp
+            const whatsappService = new WhatsAppService(env);
+            const baseUrl = env.BETTER_AUTH_URL;
+            const url = `${baseUrl}/api/auth/verify?phoneNumber=${phoneNumber}&code=${code}`;
+            console.log('sending url for sign in', url);
+            await whatsappService.sendMessage(phoneNumber, url);
+          },
+          signUpOnVerification: {
+            getTempEmail: (phoneNumber) => {
+              return `${phoneNumber}@whatsapp-ai.com`;
+            },
+            //optionally, you can also pass `getTempName` function to generate a temporary name for the user
+            getTempName: (phoneNumber) => {
+              return phoneNumber; //by default, it will use the phone number as the name
+            },
+          },
+        }),
+      ],
     });
 
     const app = new Hono<{ Bindings: Env }>();
