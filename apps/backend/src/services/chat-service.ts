@@ -344,7 +344,7 @@ export class ChatService {
         return null;
       }
 
-      return lastChunk.messages[lastChunk.messages.length - 1];
+      return lastChunk.messages[lastChunk.messages.length - 1] || null;
     } catch (error) {
       console.error('Error getting last message:', error);
       return null;

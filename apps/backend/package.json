@@ -24,6 +24,7 @@
     "cf-typegen": "wrangler types",
     "check": "tsc && wrangler deploy --dry-run",
     "deploy": "pnpm run cf-typegen && wrangler secret bulk .dev.vars.production && wrangler deploy",
+    "deploy:secrets": "wrangler secret bulk .dev.vars.production",
     "dev": "wrangler dev --x-remote-bindings",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",

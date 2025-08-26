@@ -27,7 +27,7 @@ export default {
     const auth = createAuth({
       db,
       authSecret: env.BETTER_AUTH_SECRET,
-      webUrl: env.BETTER_AUTH_URL,
+      webUrl: env.WEB_APP_URL,
       // Has to use the type from @cloudflare/workers-types as wrangler uses a different version of the KVNamespace type
       kv: env.BETTER_AUTH_SESSION as KVNamespace<string>,
       plugins: [
@@ -46,7 +46,8 @@ export default {
             const baseUrl = env.BETTER_AUTH_URL;
             const url = `${baseUrl}/api/auth/verify?phoneNumber=${phoneNumber}&code=${code}`;
             console.log('sending url for sign in', url);
-            await whatsappService.sendMessage(phoneNumber, url);
+            const result = await whatsappService.sendMessage(phoneNumber, url);
+            console.log('result', result);
           },
           signUpOnVerification: {
             getTempEmail: (phoneNumber) => {

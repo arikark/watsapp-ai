@@ -14,5 +14,5 @@ import { getBaseOptions } from './server';
  * - https://www.better-auth.com/docs/concepts/cli
  */
 export const auth = betterAuth({
-  ...getBaseOptions(createDb({ databaseUrl: '' })),
+  ...getBaseOptions(createDb({ databaseUrl: '' }), ''),
 });

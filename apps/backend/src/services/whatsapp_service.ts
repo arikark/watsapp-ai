@@ -15,6 +15,7 @@ export class WhatsAppService {
     to: string,
     message: string
   ): Promise<WhatsAppResponse | null> {
+    console.log('Sending message to', to, 'with message', message);
     if (!this.token || !this.phoneNumberId) {
       console.error('WhatsApp credentials not configured');
       return null;
@@ -44,6 +45,7 @@ export class WhatsAppService {
       }
 
       const result = (await response.json()) as WhatsAppResponse;
+      console.log('WhatsApp API response:', result);
       return result;
     } catch (error) {
       console.error('Error sending WhatsApp message:', error);
