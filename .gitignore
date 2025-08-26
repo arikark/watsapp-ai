@@ -39,4 +39,12 @@ npm-debug.log*
 # Public
 public/
 
+.dev.vars
+.dev.vars.production
+.env.prod
+.wrangler
+*.tsbuildinfo
+
+worker-configuration.d.ts
+
 

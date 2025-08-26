@@ -3,28 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "exports": {
-    "./client": {
-      "import": "./dist/client.mjs",
-      "require": "./dist/client.js"
-    },
-    "./server": {
-      "import": "./dist/server.mjs",
-      "require": "./dist/server.js"
-    }
-  },
   "scripts": {
     "build": "tsup",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsup --watch",
-    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "dev": "tsup --watch --dts",
     "auth:schema:generate": "pnpx @better-auth/cli generate --config ./src/cli-config.ts --output ../db/src/schemas/auth.ts",
     "lint": "eslint",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@workspace/db": "workspace:*",
-    "better-auth": "catalog:"
+    "better-auth": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "catalog:",
@@ -32,5 +22,12 @@
     "@workspace/typescript-config": "workspace:*",
     "tsup": "catalog:",
     "typescript": "catalog:"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
   }
 }

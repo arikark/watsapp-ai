@@ -1,6 +1,10 @@
 import type { KVNamespace } from '@cloudflare/workers-types';
 import type { DatabaseInstance } from '@workspace/db';
-import { type BetterAuthOptions, betterAuth } from 'better-auth';
+import {
+  type BetterAuthOptions,
+  type BetterAuthPlugin,
+  betterAuth,
+} from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { phoneNumber } from 'better-auth/plugins/phone-number';
 
@@ -10,44 +14,67 @@ export interface AuthOptions extends BetterAuthOptions {
   db: DatabaseInstance;
 }
 
-export type AuthInstance = ReturnType<typeof createAuth>;
+// Use any type to avoid complex type inference issues
+
+const basePlugins = [phoneNumber()];
 
 /**
  * This function is abstracted for schema generations in cli-config.ts
  */
-export const getBaseOptions = (db: DatabaseInstance) =>
-  ({
+export const getBaseOptions = (db: DatabaseInstance) => {
+  const session = {
+    additionalFields: {
+      phoneNumber: {
+        type: 'string',
+        required: true,
+      },
+    },
+  } satisfies BetterAuthOptions['session'];
+
+  const baseOptions = {
     database: drizzleAdapter(db, {
       provider: 'pg',
     }),
     trustedOrigins: ['http://localhost:8787', 'http://localhost:5173'],
     // Plugins to be added for type inference. They will be overridden in createAuth if passed as options.
-    plugins: [phoneNumber()],
-    session: {
-      additionalFields: {
-        phoneNumber: {
-          type: 'string',
-          required: true,
-        },
-      },
-    },
-    secondaryStorage: {
-      get: async () => {
-        return null;
-      },
-      set: async () => {
-        return;
-      },
-      delete: async () => {
-        return;
-      },
-    },
+    plugins: basePlugins,
+    session,
+    // secondaryStorage: {
+    //   get: async () => {
+    //     return null;
+    //   },
+    //   set: async () => {
+    //     return;
+    //   },
+    //   delete: async () => {
+    //     return;
+    //   },
+    // },
 
     /**
      * Only uncomment the line below if you are using plugins, so that
      * your types can be correctly inferred:
      */
-  }) satisfies BetterAuthOptions;
+  } satisfies BetterAuthOptions;
+
+  return baseOptions;
+};
+
+export const validateBetterAuthPlugins = ({
+  service,
+  plugins,
+}: {
+  plugins: BetterAuthPlugin[];
+  service: 'backend' | 'frontend';
+}) => {
+  for (const plugin of plugins) {
+    if (!basePlugins.some((p) => p.id === plugin.id)) {
+      throw new Error(
+        `Plugin ${plugin.id} is used in ${service} better auth instance but not in the base options`
+      );
+    }
+  }
+};
 
 /**
  * Creates a BetterAuth instance with the given options.
@@ -68,9 +95,13 @@ export const createAuth = ({
   authSecret: string;
   kv: KVNamespace<string>;
 } & BetterAuthOptions) => {
-  // const list = await kv.list();
-  // console.log('list on server', list);
-  return betterAuth({
+  if (options.plugins) {
+    validateBetterAuthPlugins({
+      plugins: options.plugins,
+      service: 'backend',
+    });
+  }
+  const auth = betterAuth({
     ...getBaseOptions(db),
     ...options,
     secret: authSecret,
@@ -98,4 +129,5 @@ export const createAuth = ({
       },
     },
   });
+  return auth;
 };

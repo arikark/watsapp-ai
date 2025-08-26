@@ -1,11 +1,9 @@
 import type { KVNamespace } from '@cloudflare/workers-types';
-import { createAuth } from '@workspace/auth/server';
+import { createAuth } from '@workspace/auth';
 import { createDb } from '@workspace/db';
-import { phoneNumber } from 'better-auth/plugins/phone-number';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import { renderAdminDashboard } from './admin_dashboard';
 import { AIService } from './services/ai_service';
 import { ChatService } from './services/chat-service';
 import { ChatSessionService } from './services/chat-session-service';
@@ -25,50 +23,15 @@ function getValidationErrorStatusCode(error?: string): 400 | 401 {
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const db = createDb({ databaseUrl: env.DATABASE_URL });
-
-    const app = new Hono<{ Bindings: Env }>();
     const auth = createAuth({
-      webUrl: env.BETTER_AUTH_URL,
       db,
       authSecret: env.BETTER_AUTH_SECRET,
-      plugins: [
-        phoneNumber({
-          callbackOnVerification: async ({ phoneNumber, user }, _request) => {
-            const chatSessionService = new ChatSessionService(
-              env.BETTER_AUTH_SESSION
-            );
-            await chatSessionService.putWhatsAppUserSession(phoneNumber, user);
-          },
-          sendOTP: async ({ phoneNumber, code }, request) => {
-            console.log('request');
-            console.log(request);
-            console.log('Sending OTP to', phoneNumber, 'with code', code);
-            // Send OTP to user via whatsapp
-            const whatsappService = new WhatsAppService(env);
-            const baseUrl = env.BETTER_AUTH_URL;
-            const url = `${baseUrl}/api/auth/verify?phoneNumber=${phoneNumber}&code=${code}`;
-            console.log('sending url for sign in', url);
-            await whatsappService.sendMessage(phoneNumber, url);
-          },
-          signUpOnVerification: {
-            getTempEmail: (phoneNumber) => {
-              return `${phoneNumber}@whatsapp-ai.com`;
-            },
-            //optionally, you can also pass `getTempName` function to generate a temporary name for the user
-            getTempName: (phoneNumber) => {
-              return phoneNumber; //by default, it will use the phone number as the name
-            },
-          },
-        }),
-      ],
-      // Workers using different KV namespaces version than that imported from @cloudflare/workers-types
+      webUrl: env.BETTER_AUTH_URL,
+      // Has to use the type from @cloudflare/workers-types as wrangler uses a different version of the KVNamespace type
       kv: env.BETTER_AUTH_SESSION as KVNamespace<string>,
-      secondaryStorage: {
-        get: async () => {
-          return null;
-        },
-      },
     });
+
+    const app = new Hono<{ Bindings: Env }>();
 
     // Middleware
     app.use('*', logger());
@@ -91,15 +54,6 @@ export default {
         message: 'WhatsApp AI Chatbot is running',
         timestamp: new Date().toISOString(),
         version: 'v22.0',
-      });
-    });
-
-    // Admin dashboard
-    app.get('/admin', (_c) => {
-      return new Response(renderAdminDashboard(), {
-        headers: {
-          'Content-Type': 'text/html',
-        },
       });
     });
 

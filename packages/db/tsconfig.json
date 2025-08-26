@@ -1,6 +1,11 @@
 {
   "extends": "@workspace/typescript-config/base.json",
   "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "allowJs": true,
+    "jsx": "preserve",
+    "noEmit": true,
     "baseUrl": ".",
     "paths": {
       "@workspace/db/*": ["./src/*"]
